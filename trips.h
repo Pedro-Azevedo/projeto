@@ -1,42 +1,35 @@
-#ifndef TRIPS_H_INCLUDED
-#define TRIPS_H_INCLUDED
+#ifndef STATIONS_H_INCLUDED
+#define STATIONS_H_INCLUDED
 
-#include "stations.h"
+typedef struct
+{
+    int stationID;
+    char terminal[7];
+    char station[250];
+    char municipal[10];
+    double lat;
+    double lng;
+    char status[10];
+} station_data;
 
-typedef struct{
-    int hour;
-    int minute;
-}ttime;
+typedef struct station
+{
+    station_data station_file;
+    struct station *prev;
+    struct station *next;
+} stationnode;
+
+stationnode* stationtail;
+
+void stationlisting(void);
+void routelisting(void);
+
+stationnode* stationfile_read(void);
+stationnode* create_stationlist(station_data,stationnode*);
+stationnode* stationnode_alloc(stationnode*,stationnode*);
 
 
-typedef struct{
-    int day;
-    int month;
-    int year;
-}ddate;
-
-
-typedef struct{
-    int type;
-    int birthyear;
-    int gender;
-}person;
-
-
-
-typedef struct{
-    int tripID;
-    int timespan;
-    ttime timebegin;
-    ttime timeend;
-    ddate datebegin;
-    ddate dateend;
-    char bikeID[7];
-    person user;
-    station_data *start;
-    station_data *stop;
-
-}trip_data;
+#endif // STATIONS_H_INCLUDED
 
 void textmode(void);
 void dataselection(int*,ttime*, ttime*, int*, int*);
