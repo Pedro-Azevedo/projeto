@@ -1,17 +1,32 @@
 #ifndef STATIONS_H_INCLUDED
 #define STATIONS_H_INCLUDED
-typedef struct{
+
+typedef struct
+{
     int stationID;
     char terminal[7];
-    char* station;
-    char* municipal;
+    char station[250];
+    char municipal[10];
     double lat;
     double lng;
-    int status;
-}station_data;
+    char status[10];
+} station_data;
+
+typedef struct station
+{
+    station_data station_file;
+    struct station *prev;
+    struct station *next;
+} stationnode;
+
+stationnode* stationtail;
 
 void stationlisting(void);
 void routelisting(void);
+
+stationnode* stationfile_read(void);
+stationnode* create_stationlist(station_data,stationnode*);
+stationnode* stationnode_alloc(stationnode*,stationnode*);
 
 
 #endif // STATIONS_H_INCLUDED
