@@ -61,17 +61,22 @@ void criterion (ttime* _begin, ttime* _end, int* _weekday, int* _maxduration)
         userchoice=testchoice(5);
 
         switch(userchoice)
-            {
-                case 1: criterion1(_begin, _end);
-                        break;
-                case 2: (*_weekday)=criterion2();
-                        break;
-                case 3: (*_maxduration)=criterion3();
-                        break;
-                case 4: ClearData(_begin, _end, _weekday, _maxduration);
-                        break;
-                case 5: return; //brekas the infinite cycle
-            }
+        {
+        case 1:
+            criterion1(_begin, _end);
+            break;
+        case 2:
+            (*_weekday)=criterion2();
+            break;
+        case 3:
+            (*_maxduration)=criterion3();
+            break;
+        case 4:
+            ClearData(_begin, _end, _weekday, _maxduration);
+            break;
+        case 5:
+            return; //brekas the infinite cycle
+        }
     }
 }
 
@@ -85,10 +90,11 @@ void criterion (ttime* _begin, ttime* _end, int* _weekday, int* _maxduration)
 int testchoice(int _max)
 {
     int userchoice=0; //variable to return
-    char buffer[BUFSIZE]={'\0'}; //string to get the what the user types on the screen
+    char buffer[BUFSIZE]= {'\0'}; //string to get the what the user types on the screen
     int testchoice=0; //test variable to evaluate what the user typed
     // do-while cycle so that the program asks the user while the option is invalid
-    do{
+    do
+    {
         printf("Please type the integer corresponding to your choice:\n");
         fgets(buffer, BUFSIZE, stdin);
         testchoice=sscanf(buffer, "%d", &userchoice);
@@ -97,7 +103,8 @@ int testchoice(int _max)
             printf("Invalid choice\n");
             testchoice=0;
         }
-    }while(testchoice!=1);
+    }
+    while(testchoice!=1);
 
     return userchoice;
 }
@@ -112,10 +119,11 @@ int testchoice(int _max)
 
 void criterion1(ttime* _begin, ttime* _end)
 {
-    char buffer[BUFSIZE]={'\0'}; //string to get the what the user types on the screen
+    char buffer[BUFSIZE]= {'\0'}; //string to get the what the user types on the screen
     int validchoice=0; //test variable to evaluate what the user typed
     // do-while cycle so that the program asks the user while the option is invalid
-    do{
+    do
+    {
         printf("Type by order the beginning and ending hour\n");
         fgets(buffer, BUFSIZE, stdin);
         validchoice=sscanf(buffer, "%d %d", &((*_begin).hour), &((*_end).hour));
@@ -124,22 +132,24 @@ void criterion1(ttime* _begin, ttime* _end)
             printf("Invalid choice\n");
             validchoice=0;
         }
-    }while(validchoice!=2);
+    }
+    while(validchoice!=2);
 }
 
 
- /**
- * criterion2 function: to evaluate the second criterion of the program (weekday of the travel)
- * It simply returns an int to represent the chosen day of the week (monday=1, tuesday=2, wednesday=3, etc.)
- */
+/**
+* criterion2 function: to evaluate the second criterion of the program (weekday of the travel)
+* It simply returns an int to represent the chosen day of the week (monday=1, tuesday=2, wednesday=3, etc.)
+*/
 
 int criterion2(void)
 {
-    char buffer[BUFSIZE]={'\0'}; //string to get the what the user types on the screen
+    char buffer[BUFSIZE]= {'\0'}; //string to get the what the user types on the screen
     int validchoice=0; //test variable to evaluate what the user typed
     int weekday=0; //variable to return
     // do-while cycle so that the program asks the user while the option is invalid
-    do{
+    do
+    {
         printf("Type the integer corresponding the day of the week (1=monday;...7=sunday)\n");
         fgets(buffer, BUFSIZE, stdin);
         validchoice=sscanf(buffer, "%d", &weekday);
@@ -148,24 +158,26 @@ int criterion2(void)
             printf("Invalid choice\n");
             validchoice=0;
         }
-    }while(validchoice!=1);
+    }
+    while(validchoice!=1);
 
     return weekday;
 }
 
- /**
- * criterion3 function: to evaluate the third criterion of the program (maximum duration of the travel)
- * It simply returns an int that stores the maximum duration chosen
- */
+/**
+* criterion3 function: to evaluate the third criterion of the program (maximum duration of the travel)
+* It simply returns an int that stores the maximum duration chosen
+*/
 
 
 int criterion3(void)
 {
-    char buffer[BUFSIZE]={'\0'}; //string to get the what the user types on the screen
+    char buffer[BUFSIZE]= {'\0'}; //string to get the what the user types on the screen
     int validchoice=0; //test variable to evaluate what the user typed
     int maxduration=0; //variable to return
     // do-while cycle so that the program asks the user while the option is invalid
-    do{
+    do
+    {
         validchoice=0;
         printf("Type the maximum duration (in seconds)\n");
         fgets(buffer, BUFSIZE, stdin);
@@ -175,19 +187,20 @@ int criterion3(void)
             printf("Invalid choice\n");
             validchoice=0;
         }
-    }while(validchoice!=1);
+    }
+    while(validchoice!=1);
 
     return maxduration;
 }
 
 
- /**
- * ClearData function: to clear all the data that was defined
- * \param _begin --> one criterion the user can choose to verify (time when the travel starts)
- * \param _end --> one criterion the user can choose to verify (time when the travel ends)
- * \param _weekday -->one criterion the user can choose to verify (weekday of the travel)
- * \param _maxduration --> one criterion the user can choose to verify (max duration of the travel)
- */
+/**
+* ClearData function: to clear all the data that was defined
+* \param _begin --> one criterion the user can choose to verify (time when the travel starts)
+* \param _end --> one criterion the user can choose to verify (time when the travel ends)
+* \param _weekday -->one criterion the user can choose to verify (weekday of the travel)
+* \param _maxduration --> one criterion the user can choose to verify (max duration of the travel)
+*/
 
 void ClearData(ttime* _begin, ttime* _end, int* _weekday, int* _maxduration)
 {
@@ -219,4 +232,66 @@ void routelisting(void)
 void statisticslisting(void)
 {
 
+}
+
+/**
+ * Links the allocated node pointer to the read structure and doubly links it
+ */
+tripnode* create_triplist(trip_data struct_node, tripnode* prevnode)
+{
+    tripnode *nextnode=NULL;
+    //allocating mem for the node
+    prevnode = tripnode_alloc(prevnode,nextnode);
+    prevnode->trip_file=struct_node;
+    return prevnode;
+}
+
+/**
+ * Links the allocated node pointer to the read structure and doubly links it
+ */
+stationnode* create_stationlist(station_data struct_node, stationnode* prevnode)
+{
+    stationnode *nextnode=NULL;
+    //allocating mem for the node
+    prevnode = stationnode_alloc(prevnode,nextnode);
+    prevnode->station_file=struct_node;
+    return prevnode;
+}
+
+/**
+ *  Dinamically allocates memory for each node of the station list
+ */
+stationnode* stationnode_alloc(stationnode* prevnode, stationnode* nextnode)
+{
+    stationnode *stationnode_ptr=(stationnode*)malloc(sizeof(stationnode));
+    if(stationnode_ptr==NULL)
+    {
+        printf("Error! It was not possible to allocate memory.");
+        exit(EXIT_FAILURE);
+    }
+    else
+    {
+        stationnode_ptr->next=nextnode;
+        stationnode_ptr->prev=prevnode;
+    }
+    return stationnode_ptr;
+}
+
+/**
+ *  Dinamically allocates memory for each node of the trip list
+ */
+tripnode* tripnode_alloc(tripnode* prevnode, tripnode* nextnode)
+{
+    tripnode *tripnode_ptr=(tripnode*)malloc(sizeof(tripnode));
+    if(tripnode_ptr==NULL)
+    {
+        printf("Error! It was not possible to allocate memory.");
+        exit(EXIT_FAILURE);
+    }
+    else
+    {
+        tripnode_ptr->next=nextnode;
+        tripnode_ptr->prev=prevnode;
+    }
+    return tripnode_ptr;
 }
