@@ -69,3 +69,35 @@ stationnode* stationfile_read()
     }
     return prev_node;
 }
+
+/**
+ *  Fills each trip structure station start and stop pointer with the pointers that match the correspondent structures
+ */
+void fillstation_triplist(tripnode* lasttrip,stationnode* laststation)
+{
+    tripnode* curtrip;
+    stationnode* curstation;
+    int startstation_done, stopstation_done;
+
+    ///goes through the trip list from tail to head
+    for(curtrip=lasttrip; curtrip!=NULL; curtrip=curtrip->prev)
+    {
+        startstation_done=stopstation_done=0;
+        ///goes through the station list from tail to head until both start and stop stations are found
+        for(curstation=laststation; curstation!=NULL && (startstation_done!=1  || stopstation_done!=1); curstation=curstation->prev)
+        {
+            ///if the current station has the same ID as the starting one a pointer to its structure is assigned
+            if(curstation->station_file.stationID==curtrip->trip_file.startstationID)
+            {
+                curtrip->trip_file.start=&(curstation->station_file);
+                startstation_done=1;
+            }
+            ///if the current station has the same ID as the stopping one a pointer to its structure is assigned
+            if(curstation->station_file.stationID==curtrip->trip_file.stopstationID)
+            {
+                curtrip->trip_file.stop=&(curstation->station_file);
+                stopstation_done=1;
+            }
+        }
+    }
+}
