@@ -68,6 +68,6 @@ void triplisting(void);
 tripnode* tripfile_read(void);
 tripnode* create_triplist(trip_data,tripnode*);
 tripnode* tripnode_alloc(tripnode*,tripnode*);
-
+void fillstation_triplist(tripnode*,stationnode*);
 
 #endif // TRIPS_H_INCLUDED
