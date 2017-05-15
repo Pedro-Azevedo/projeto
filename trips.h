@@ -65,9 +65,10 @@ void ClearData(ttime*, ttime*, int*, int*);
 void statisticslisting(void);
 void triplisting(void);
 
-tripnode* tripfile_read(void);
-tripnode* create_triplist(trip_data,tripnode*);
-tripnode* tripnode_alloc(tripnode*,tripnode*);
-void fillstation_triplist(tripnode*,stationnode*);
+void tripfile_read(void);
+void create_triplist(trip_data);
+tripnode* tripnode_alloc(trip_data);
+tripnode* triphead;
+void fillstation_triplist();
 
 #endif // TRIPS_H_INCLUDED
