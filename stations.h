@@ -19,14 +19,12 @@ typedef struct station
     struct station *next;
 } stationnode;
 
-stationnode* stationtail;
-
 void stationlisting(void);
 void routelisting(void);
 
-stationnode* stationfile_read(void);
-stationnode* create_stationlist(station_data,stationnode*);
-stationnode* stationnode_alloc(stationnode*,stationnode*);
-
+stationnode* stationhead;
+void stationfile_read(void);
+void create_stationlist(station_data);
+stationnode* stationnode_alloc(station_data);
 
 #endif // STATIONS_H_INCLUDED
