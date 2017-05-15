@@ -51,9 +51,6 @@ typedef struct trip
     struct trip *next;
 } tripnode;
 
-
-tripnode* triptail;
-
 void textmode(void);
 void dataselection(int*,ttime*, ttime*, int*, int*);
 void criterion(ttime*, ttime*, int*, int*);
