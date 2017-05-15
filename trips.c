@@ -237,31 +237,43 @@ void statisticslisting(void)
 /**
  * Links the allocated node pointer to the read structure and doubly links it
  */
-tripnode* create_triplist(trip_data struct_node, tripnode* prevnode)
+void create_triplist(trip_data struct_node)
 {
-    tripnode *nextnode=NULL;
-    //allocating mem for the node
-    prevnode = tripnode_alloc(prevnode,nextnode);
-    prevnode->trip_file=struct_node;
-    return prevnode;
+    //allocating mem for the node and inserting its data
+    tripnode* newnode = tripnode_alloc(struct_node);
+    if(triphead==NULL)
+    {
+        triphead=newnode;
+        return;
+    }
+    triphead->prev = newnode;
+    newnode->next = triphead;
+    triphead = newnode;
+    return;
 }
 
 /**
  * Links the allocated node pointer to the read structure and doubly links it
  */
-stationnode* create_stationlist(station_data struct_node, stationnode* prevnode)
+void create_stationlist(station_data struct_node)
 {
-    stationnode *nextnode=NULL;
-    //allocating mem for the node
-    prevnode = stationnode_alloc(prevnode,nextnode);
-    prevnode->station_file=struct_node;
-    return prevnode;
+    //allocating mem for the node and inserting its data
+    stationnode* newnode = stationnode_alloc(struct_node);
+    if(stationhead==NULL)
+    {
+        stationhead=newnode;
+        return;
+    }
+    stationhead->prev = newnode;
+    newnode->next = stationhead;
+    stationhead = newnode;
+    return;
 }
 
 /**
  *  Dinamically allocates memory for each node of the station list
  */
-stationnode* stationnode_alloc(stationnode* prevnode, stationnode* nextnode)
+stationnode* stationnode_alloc(station_data station_struct)
 {
     stationnode *stationnode_ptr=(stationnode*)malloc(sizeof(stationnode));
     if(stationnode_ptr==NULL)
@@ -271,8 +283,9 @@ stationnode* stationnode_alloc(stationnode* prevnode, stationnode* nextnode)
     }
     else
     {
-        stationnode_ptr->next=nextnode;
-        stationnode_ptr->prev=prevnode;
+        stationnode_ptr->prev=NULL;
+        stationnode_ptr->next=NULL;
+        stationnode_ptr->station_file=station_struct;
     }
     return stationnode_ptr;
 }
@@ -280,7 +293,7 @@ stationnode* stationnode_alloc(stationnode* prevnode, stationnode* nextnode)
 /**
  *  Dinamically allocates memory for each node of the trip list
  */
-tripnode* tripnode_alloc(tripnode* prevnode, tripnode* nextnode)
+tripnode* tripnode_alloc(trip_data trip_structure)
 {
     tripnode *tripnode_ptr=(tripnode*)malloc(sizeof(tripnode));
     if(tripnode_ptr==NULL)
@@ -290,8 +303,9 @@ tripnode* tripnode_alloc(tripnode* prevnode, tripnode* nextnode)
     }
     else
     {
-        tripnode_ptr->next=nextnode;
-        tripnode_ptr->prev=prevnode;
+        tripnode_ptr->next=NULL;
+        tripnode_ptr->prev=NULL;
+        tripnode_ptr->trip_file=trip_structure;
     }
     return tripnode_ptr;
 }
