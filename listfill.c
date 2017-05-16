@@ -318,7 +318,7 @@ tripnode* RemoveUsingHour(ttime* _begin, ttime* _end, tripnode* _headtrip)
 
     while(current!=NULL)
     {
-        if(current->trip_file.timebegin.hour!=_begin->hour || current->trip_file.timeend.hour!=_end->hour)
+        if((current->trip_file.timebegin.hour<_begin->hour || current->trip_file.timeend.hour>=_end->hour) || current->trip_file.datebegin.day != current->trip_file.dateend.day)
         {
 
             //To remove the head
@@ -343,8 +343,6 @@ tripnode* RemoveUsingHour(ttime* _begin, ttime* _end, tripnode* _headtrip)
                 temp=current;
                 //We set the next pointer of prev to the next pointer of current
                 prev->next=current->next;
-                //We set prev to current
-                prev=current;
                 //We advance current
                 current=current->next;
                 //We free the memory
@@ -415,8 +413,6 @@ tripnode* RemoveUsingWeekday(int _weekday, tripnode* _headtrip)
                 temp=current;
                 //We set the next pointer of prev to the next pointer of current
                 prev->next=current->next;
-                //We set prev to current
-                prev=current;
                 //We advance current
                 current=current->next;
                 //We free the memory
@@ -429,7 +425,6 @@ tripnode* RemoveUsingWeekday(int _weekday, tripnode* _headtrip)
             prev=current; //We save the current node
             current=current->next; //We use the pointer to the next
         }
-
 
     }
 
@@ -449,110 +444,83 @@ int ConvertDate(int _day, int _month, int _year)
     int convert=0; //variable to save the conversion
     int monthscale=0; //auxiliar variable to convert the month
     int yeardigits=0;//variable to save the last two digits of the year
-    int leapyearflag=0; //to flag a leap year
+    int centuryscale=0; //to flag a leap year
     //We start by taking the last two digits of the year
     convert=_year%100;
     //We divide by 4
     convert/=4;
-    //We sum it to the day
-    convert+=_day;
+    //We add another last two digits of the year
+    convert+=_year%100;
+    //We then calculate its modulus 7
+    convert=convert%7;
 
     //We use the table of conversion of the months
     switch(_month)
     {
         case 1:
         case 10:
-                monthscale=1;
+                monthscale=0;
                 break;
         case 2:
         case 3:
         case 11:
-                monthscale=4;
+                monthscale=3;
                 break;
         case 4:
         case 7:
-                monthscale=0;
+                monthscale=6;
                 break;
         case 5:
-                monthscale=2;
+                monthscale=1;
                 break;
         case 6:
-                monthscale=5;
+                monthscale=4;
                 break;
         case 8:
-                monthscale=3;
+                monthscale=2;
                 break;
         case 9:
         case 12:
-                monthscale=6;
+                monthscale=5;
+                break;
     }
 
 
     //We sum the monthscale
     convert+=monthscale;
-    //We verify if we have a leap year
-    leapyearflag=LeapYear(_year);
-
-    //If we have and the month is january or february we decrement convert
-    if(leapyearflag==1 &&(_month==1 || _month==2))
+    //We re-do the modulus 7
+    convert=convert%7;
+    //We sum it to the day
+    convert+=_day;
+    //We re-do the modulus 7
+    convert=convert%7;
+    //We use the table of conversion of the XX00s
+    switch(_year/100)
     {
-        convert--;
+        case 17:
+            centuryscale=4;
+            break;
+        case 18:
+            centuryscale=2;
+            break;
+        case 19:
+            centuryscale=0;
+            break;
+        case 20:
+            centuryscale=6;
+            break;
     }
 
-    //We sum 6
-    convert+=6;
+    //We sum the century adjuster
+    convert+=centuryscale;
 
-    //We take the last two digits of the year
-    yeardigits=_year%100;
-    //We add it
-    convert+=yeardigits;
+    //We re-do the modulus 7 to convert to our scale (6=Saturday, 7=Sunday)
+    convert=convert%7;
 
-    //We divide it by 7
-    convert/=7;
-
-    //If the result is zero or 1(Saturday or Sunday) we add 6 to convert to our scale (6=Saturday, 7=Sunday)
-    if(convert==0 || convert==1)
-        convert+=6;
-    //If the result is other we decrement to have the same effect
-    else
-        convert--;
-
+    printf("%d ",convert);
     //We returned the converted value
     return convert;
 }
-
-/**
-* Leaoyear function function: to test if a year is leap
-* \param _year
-* It returns a flag to tell if the the year is leap(1) or not(0)
-*/
-
-int LeapYear(int _year)
-{
-    int flag=0;
-    //If the year can be divided by 400 the year is leap
-    if(_year%400==0)
-        flag=1;
-    else
-    {
-        //if it can be divided by 100 (but not by 400) it is not a leap year
-        if(_year%100==0)
-            flag=0;
-        else
-        {
-            //if it can't be divided neither by 400 nor 100, but it is by 4 it's a leap year
-            if(_year%4==0)
-                flag=1;
-            //If every condition fails it is not a leap year
-            else
-                flag=0;
-        }
-    }
-
-    return flag;
-
-}
-
 
 
 tripnode* RemoveUsingMaxduration(int _maxduration, tripnode* _headtrip)
@@ -567,7 +535,6 @@ tripnode* RemoveUsingMaxduration(int _maxduration, tripnode* _headtrip)
         //we simply return the head i.e. NULL
         return _headtrip;
     }
-
 
     current=_headtrip;
     prev=current;
@@ -590,7 +557,6 @@ tripnode* RemoveUsingMaxduration(int _maxduration, tripnode* _headtrip)
                 //we free the memory
                 free(temp);
             }
-
             //To remove in the middle of the list or in the tail
             else
             {
@@ -598,24 +564,18 @@ tripnode* RemoveUsingMaxduration(int _maxduration, tripnode* _headtrip)
                 temp=current;
                 //We set the next pointer of prev to the next pointer of current
                 prev->next=current->next;
-                //We set prev to current
-                prev=current;
                 //We advance current
                 current=current->next;
                 //We free the memory
                 free(temp);
             }
         }
-
         else
         {
             prev=current; //We save the current node
             current=current->next; //We use the pointer to the next
         }
-
-
     }
-
     return _headtrip;
-
+    }
 }
