@@ -516,8 +516,6 @@ int ConvertDate(int _day, int _month, int _year)
 
     //We re-do the modulus 7 to convert to our scale (6=Saturday, 7=Sunday)
     convert=convert%7;
-
-    printf("%d ",convert);
     //We returned the converted value
     return convert;
 }
