@@ -283,8 +283,6 @@ void InsertStationList(stationnode** _headstation, station_data _station)
         {
             current=current->next;
         }
-
-
         //We set the newnode next pointer to point to the the element after current(it works even if it is NULL)
         newnode->next=current->next;
         //We set the current next pointer to point to the new node
@@ -295,11 +293,12 @@ void InsertStationList(stationnode** _headstation, station_data _station)
 }
 
 /**
-* RemoveUsingHoure function: to remove form the list using the hour criterion
-* \param _headstation --> the head node of the list (the list itself passed by reference)
-* \param _station --> the station structure
+* RemoveUsingHour function: to remove form the list using the hour criterion
+* \param _headtrip --> the head node of the list (the list itself passed by reference)
+* \param _begin --> structure with the selected initial time
+* \param _end --> structure with the selected final time
+* It returns the updated headnode
 */
-
 tripnode* RemoveUsingHour(ttime* _begin, ttime* _end, tripnode* _headtrip)
 {
     tripnode* current=NULL; //auxiliar node to iterate over the list
@@ -335,7 +334,12 @@ tripnode* RemoveUsingHour(ttime* _begin, ttime* _end, tripnode* _headtrip)
 
 }
 
-
+/**
+* RemoveUsingWeekday function: to remove from the list using the weekday criterion
+* \param _headtrip --> the head node of the list (the list itself passed by reference)
+* \param _weekday --> the value that represents the selected week day
+* It returns the updated head node
+*/
 tripnode* RemoveUsingWeekday(int _weekday, tripnode* _headtrip)
 {
     tripnode* current=NULL; //auxiliar node to iterate over the list
@@ -464,7 +468,12 @@ int ConvertDate(int _day, int _month, int _year)
     return convert;
 }
 
-
+/**
+* RemoveUsingMaxDuration function: to remove from the list using the MaxDuration criterion
+* \param _headtrip --> the head node of the list (the list itself passed by reference)
+* \param _maxduration --> inserted value for the maximum trip duration in seconds
+* It returns the updated headnode
+*/
 tripnode* RemoveUsingMaxduration(int _maxduration, tripnode* _headtrip)
 {
     tripnode* current=NULL; //auxiliar node to iterate over the list
@@ -495,6 +504,12 @@ tripnode* RemoveUsingMaxduration(int _maxduration, tripnode* _headtrip)
     return _headtrip;
 }
 
+/**
+* RemoveNode function: to remove nodes from the list
+* \param _headstation --> the head node of the list (the list itself passed by reference)
+* \param _current --> the node being removed from the list
+* \param _prev --> the node previous to the one being removed
+*/
 void RemoveNode(tripnode** _current, tripnode** _prev, tripnode** _headtrip)
 {
     tripnode* _temp=NULL; //auxiliar node to free memory
