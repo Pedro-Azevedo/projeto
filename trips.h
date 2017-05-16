@@ -1,6 +1,6 @@
 #ifndef TRIPS_H_INCLUDED
 #define TRIPS_H_INCLUDED
-#define BUFSIZE 100
+#define BUFSIZE 1000
 #include "stations.h"
 
 typedef struct
@@ -20,11 +20,10 @@ typedef struct
 
 typedef struct
 {
-    char type[10];
+    int type;
     int birthyear;
-    char gender[6];
+    int gender;
 } person;
-
 
 
 typedef struct
@@ -37,35 +36,36 @@ typedef struct
     ddate dateend;
     char bikeID[7];
     person user;
-    int startstationID;
-    int stopstationID;
-    station_data *start;
-    station_data *stop;
+    int stationstartID;
+    int stationstopID;
 
 } trip_data;
 
 typedef struct trip
 {
     trip_data trip_file;
-    struct trip *prev;
     struct trip *next;
 } tripnode;
 
-void textmode(void);
-void dataselection(int*,ttime*, ttime*, int*, int*);
-void criterion(ttime*, ttime*, int*, int*);
-int testchoice(int);
-void criterion1(ttime*, ttime*);
-int criterion2(void);
-int criterion3(void);
-void ClearData(ttime*, ttime*, int*, int*);
-void statisticslisting(void);
-void triplisting(void);
 
-void tripfile_read(void);
-void create_triplist(trip_data);
-tripnode* tripnode_alloc(trip_data);
-tripnode* triphead;
-void fillstation_triplist();
+void textmode(char**, tripnode**, stationnode**);
+void dataselection(int*,ttime*, ttime*, int*, int*, tripnode**, stationnode**, char**);
+void criterion(ttime*, ttime*, int*, int*, tripnode**, stationnode**, char**);
+int testchoice(int);
+void criterion1(ttime*, ttime*, tripnode**);
+int criterion2(tripnode**);
+int criterion3(tripnode**);
+void ClearData(char**, tripnode**, stationnode**);
+void statisticslisting(void);
+void triplisting(tripnode**);
+void load_fromfiles(char**, tripnode**, stationnode**);
+void load_tripfile(tripnode**, FILE*);
+tripnode* NewTripNode(trip_data);
+void InsertTripList(tripnode**, trip_data);
+tripnode* RemoveUsingHour(ttime*, ttime*, tripnode*);
+tripnode* RemoveUsingWeekday(int, tripnode*);
+tripnode* RemoveUsingMaxduration(int, tripnode*);
+int ConvertDate(int, int, int);
+int LeapYear(int);
 
 #endif // TRIPS_H_INCLUDED

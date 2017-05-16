@@ -23,7 +23,7 @@ void arguments_test(int argc, char **argv)
 
 
     //Test if the files entered are correct and in the correct positions
-    if(strcmp(argv[2],"hubway_stations.csv")!=0 || strcmp(argv[3],"hubway_trips.csv")!=0 || strcmp(argv[2],"hubway_trips.csv")!=0 || strcmp(argv[3],"hubway_stations.csv")!=0)
+    if(strcmp(argv[2],"hubway_stations.csv")!=0 || strcmp(argv[3],"hubway_trips.csv")!=0 || strcmp(argv[2],"hubway_trips.csv")==0 || strcmp(argv[3],"hubway_stations.csv")==0)
     {
         printf("Error: Incompatible files entered\n");
         exit(EXIT_FAILURE);

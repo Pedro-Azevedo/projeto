@@ -12,7 +12,7 @@
  * It shows us the menu with options for Data Selection or various Listings
  */
 
-void textmode(void)
+void textmode(char** argv, tripnode** _triplist, stationnode** _stationlist)
 {
     int userchoice=0; //the choice from the given menu
     int all=0;  // parameter that will serve to check if the user wants to see all the travels or just
@@ -41,17 +41,23 @@ void textmode(void)
 
         switch(userchoice)
         {
-            case 1: dataselection(&all, &begin, &end, &maxduration, &weekday);
-                    break;
-            case 2: triplisting();
-                    break;
-            case 3: stationlisting();
-                    break;
-            case 4: routelisting();
-                    break;
-            case 5: statisticslisting();
-                    break;
-            case 6: return;//breaks the infinite cycle
+            case 1:
+                dataselection(&all, &begin, &end, &maxduration, &weekday, _triplist, _stationlist, argv);
+                break;
+            case 2:
+                triplisting(_triplist);
+                break;
+            case 3:
+                stationlisting();
+                break;
+            case 4:
+                routelisting();
+                break;
+            case 5:
+                statisticslisting();
+                break;
+            case 6:
+                return;//breaks the infinite cycle
         }
     }
 

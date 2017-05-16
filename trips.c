@@ -14,10 +14,13 @@
  * \param _end --> one criterion the user can choose to verify (time when the travel ends)
  * \param _weekday -->one criterion the user can choose to verify (weekday of the travel)
  * \param _maxduration --> one criterion the user can choose to verify (max duration of the travel)
+ * \param _triplist --> the list of trips
+ * \param _stationlist --> the list of stations
+ * \param argv --> the parameters of main
  * All this parameters are passed to the function by reference
  */
 
-void dataselection(int* _all, ttime* _begin, ttime* _end, int* _weekday, int* _maxduration)
+void dataselection(int* _all, ttime* _begin, ttime* _end, int* _weekday, int* _maxduration, tripnode** _triplist, stationnode** _stationlist, char** argv)
 {
     printf("\nYou chose \"1. Data Selection\" mode\n");
     printf("Do you want to:\n\n");
@@ -29,7 +32,7 @@ void dataselection(int* _all, ttime* _begin, ttime* _end, int* _weekday, int* _m
 
     //If the user chooses the second option, it will be sent to another menu to define the criteria wanted
     if((*_all)==2)
-        criterion(_begin, _end, _weekday, _maxduration);
+        criterion(_begin, _end, _weekday, _maxduration, _triplist, _stationlist, argv);
 
     //If it chooses option 1 or option 3 and when it returns from function "criterion" it will return to the main menu
 }
@@ -41,10 +44,13 @@ void dataselection(int* _all, ttime* _begin, ttime* _end, int* _weekday, int* _m
  * \param _end --> one criterion the user can choose to verify (time when the travel ends)
  * \param _weekday -->one criterion the user can choose to verify (weekday of the travel)
  * \param _maxduration --> one criterion the user can choose to verify (max duration of the travel)
+ * \param _triplist --> the list of trips
+ * \param _stationlist --> the list of stations
+ * \param argv --> the parameters of main
  * All this parameters are passed to the function by reference
  */
 
-void criterion (ttime* _begin, ttime* _end, int* _weekday, int* _maxduration)
+void criterion (ttime* _begin, ttime* _end, int* _weekday, int* _maxduration, tripnode** _triplist, stationnode** _stationlist, char** argv)
 {
     int userchoice=0; //variable that stores the user choice from the menu
 
@@ -63,19 +69,19 @@ void criterion (ttime* _begin, ttime* _end, int* _weekday, int* _maxduration)
         switch(userchoice)
         {
         case 1:
-            criterion1(_begin, _end);
+            criterion1(_begin, _end, _triplist);
             break;
         case 2:
-            (*_weekday)=criterion2();
+            (*_weekday)=criterion2(_triplist);
             break;
         case 3:
-            (*_maxduration)=criterion3();
+            (*_maxduration)=criterion3(_triplist);
             break;
         case 4:
-            ClearData(_begin, _end, _weekday, _maxduration);
+            ClearData(argv, _triplist, _stationlist);
             break;
         case 5:
-            return; //brekas the infinite cycle
+            return; //breks the infinite cycle
         }
     }
 }
@@ -114,35 +120,40 @@ int testchoice(int _max)
  * criterion1 function: to evaluate the first criterion of the program (begin/end time of the travel)
  * \param _begin --> one criterion the user can choose to verify (time when the travel starts)
  * \param _end --> one criterion the user can choose to verify (time when the travel ends)
+ * \param triplist --> the list of trips
  * Both this parameters are passed to the function by reference
  */
 
-void criterion1(ttime* _begin, ttime* _end)
+void criterion1(ttime* _begin, ttime* _end, tripnode** _triplist)
 {
     char buffer[BUFSIZE]= {'\0'}; //string to get the what the user types on the screen
     int validchoice=0; //test variable to evaluate what the user typed
     // do-while cycle so that the program asks the user while the option is invalid
     do
     {
-        printf("Type by order the beginning and ending hour\n");
+        printf("Type by order the beginning hour and ending hour\n");
         fgets(buffer, BUFSIZE, stdin);
         validchoice=sscanf(buffer, "%d %d", &((*_begin).hour), &((*_end).hour));
-        if((*_begin).hour >24 || (*_begin).hour<0 || (*_end).hour >24 || (*_end).hour<0)
+        if((*_begin).hour >23 || (*_begin).hour<0 || (*_end).hour >23 || (*_end).hour<0)
         {
             printf("Invalid choice\n");
             validchoice=0;
         }
     }
     while(validchoice!=2);
+
+    //Remove the undesirable elements of the list
+    *_triplist=RemoveUsingHour(_begin,_end,*_triplist);
 }
 
 
 /**
 * criterion2 function: to evaluate the second criterion of the program (weekday of the travel)
+* \param triplist --> the list of trips (passed by reference)
 * It simply returns an int to represent the chosen day of the week (monday=1, tuesday=2, wednesday=3, etc.)
 */
 
-int criterion2(void)
+int criterion2(tripnode** _triplist)
 {
     char buffer[BUFSIZE]= {'\0'}; //string to get the what the user types on the screen
     int validchoice=0; //test variable to evaluate what the user typed
@@ -153,7 +164,7 @@ int criterion2(void)
         printf("Type the integer corresponding the day of the week (1=monday;...7=sunday)\n");
         fgets(buffer, BUFSIZE, stdin);
         validchoice=sscanf(buffer, "%d", &weekday);
-        if(weekday>24 || weekday<1)
+        if(weekday>7 || weekday<1)
         {
             printf("Invalid choice\n");
             validchoice=0;
@@ -161,16 +172,20 @@ int criterion2(void)
     }
     while(validchoice!=1);
 
+    //Remove the undesirable elements of the list
+    *_triplist=RemoveUsingWeekday(weekday,*_triplist);
+
     return weekday;
 }
 
 /**
 * criterion3 function: to evaluate the third criterion of the program (maximum duration of the travel)
+* \param triplist --> the list of trips (passed by reference)
 * It simply returns an int that stores the maximum duration chosen
 */
 
 
-int criterion3(void)
+int criterion3(tripnode** _triplist)
 {
     char buffer[BUFSIZE]= {'\0'}; //string to get the what the user types on the screen
     int validchoice=0; //test variable to evaluate what the user typed
@@ -190,32 +205,130 @@ int criterion3(void)
     }
     while(validchoice!=1);
 
+    //Remove the undesirable elements of the list
+    *_triplist=RemoveUsingMaxduration(maxduration,*_triplist);
+
     return maxduration;
 }
 
 
 /**
 * ClearData function: to clear all the data that was defined
-* \param _begin --> one criterion the user can choose to verify (time when the travel starts)
-* \param _end --> one criterion the user can choose to verify (time when the travel ends)
-* \param _weekday -->one criterion the user can choose to verify (weekday of the travel)
-* \param _maxduration --> one criterion the user can choose to verify (max duration of the travel)
+* \param argv --> parameters of main function
+* \param _triplist --> the list of trips (passed by reference)
+* \param _stationlist --> the list of stations (passed by reference)
 */
 
-void ClearData(ttime* _begin, ttime* _end, int* _weekday, int* _maxduration)
+void ClearData(char** argv, tripnode** _triplist, stationnode** _stationlist)
 {
-    // The strategy is to set the parameters to invalid values
-    // This will help us to define boundaries for cycle or conditions for if-clauses
-    // when we0ll need to print only some travels
-    _begin->hour=-1;
-    _end->hour=-1;
-    *_weekday=0;
-    *_maxduration=-1;
+    //We start by clearing the lists
+
+    tripnode* aux1; //auxiliar node to iterate over the list of trips
+    aux1=*_triplist;
+    while(aux1!=NULL)
+    {
+        aux1=aux1->next;
+        free(aux1);
+    }
+
+    stationnode* aux2; //auxiliar node to iterate over the list of stations
+    aux2=*_stationlist;
+    while(aux2!=NULL)
+    {
+        aux2=aux2->next;
+        free(aux2);
+    }
+
+    *_stationlist=NULL;
+    *_triplist=NULL;
+
+    //Then we load them again
+
+    printf("Loading files...\n");
+
+    load_fromfiles(argv, _triplist, _stationlist);
+
 }
 
+/**
+* triplisting function: to print the list of trips
+* \param _triplist --> the list of trips (passed by reference)
+*/
 
-void triplisting(void)
+void triplisting(tripnode** _triplist)
 {
+    int num=0, i=0; //variables to 1-save the number of trips to show by page and 2-use in the cycle to print
+    char c='\0'; //character to leave the cycle of printing or print more
+    char buffer[BUFSIZE]={'\0'}; //string to get the what the user types on the screen
+    int validchoice=0; //test variable to evaluate what the user typed
+    tripnode* current=NULL; //auxiliar node to iterate over the list of trips
+    do
+    {
+        printf("How many trips do you want the program to show?\n");
+        fgets(buffer, BUFSIZE, stdin);
+        validchoice=sscanf(buffer, "%d", &num);
+        if(num<=0)
+        {
+            printf("Invalid choice\n");
+            validchoice=0;
+        }
+    }
+    while(validchoice!=1);
+
+    i=num;
+    // we set the auxiliar node to the head of the list
+    current=*_triplist;
+
+
+    // The infinite cycle serves our purpose of printing pages of num elements
+    while(1)
+    {
+        //We'll print the the number of trips chosen by the user and until we reach the end of the list
+        while(i>0 && current!=NULL)
+        {
+            printf("TripID: %d\n", current->trip_file.tripID);
+            printf("Timespan: %d\n", current->trip_file.timespan);
+            printf("Date_Begin: %d/%d/%d\n", current->trip_file.datebegin.month, current->trip_file.datebegin.day, current->trip_file.datebegin.year);
+            printf("Time_Begin:%d:%.2d:00\n", current->trip_file.timebegin.hour, current->trip_file.timebegin.minute);
+            printf("Station_Start ID:%d\n",current->trip_file.stationstartID);
+            printf("Date_End:%d/%d/%d\n", current->trip_file.dateend.month, current->trip_file.dateend.day, current->trip_file.dateend.year);
+            printf("Time_End:%d:%.2d:00\n", current->trip_file.timeend.hour, current->trip_file.timeend.minute);
+            printf("Station_Stop ID:%d\n",current->trip_file.stationstopID);
+            if(strcmp(current->trip_file.bikeID,"-1")!=0)
+                printf("BikeID: %s\n", current->trip_file.bikeID);
+            else
+                printf("Doesn't have a BikeID associated\n");
+
+            if(current->trip_file.user.type==1)
+            {
+                printf("Type: Registered\n");
+                printf("Birthyear: %d\n", current->trip_file.user.birthyear);
+                if(current->trip_file.user.gender==1)
+                    printf("Gender: Male\n");
+                else
+                    printf("Gender Female\n");
+            }
+
+            else
+            {
+                printf("Type: Casual\n");
+            }
+
+            i--;
+            current=current->next;//interate over the list
+            printf("\n\n");
+        }
+
+        //when  we reach the end, we break the cycle
+        if(current==NULL)
+            break;
+
+        printf("\nPress a key to continue. Press 1 to leave\n");
+        c=getchar();
+        if(c=='1')
+            break;
+        i=num; //Reset i so that we can print more num trips
+    }
 
 }
 
@@ -232,80 +345,4 @@ void routelisting(void)
 void statisticslisting(void)
 {
 
-}
-
-/**
- * Links the allocated node pointer to the read structure and doubly links it
- */
-void create_triplist(trip_data struct_node)
-{
-    //allocating mem for the node and inserting its data
-    tripnode* newnode = tripnode_alloc(struct_node);
-    if(triphead==NULL)
-    {
-        triphead=newnode;
-        return;
-    }
-    triphead->prev = newnode;
-    newnode->next = triphead;
-    triphead = newnode;
-    return;
-}
-
-/**
- * Links the allocated node pointer to the read structure and doubly links it
- */
-void create_stationlist(station_data struct_node)
-{
-    //allocating mem for the node and inserting its data
-    stationnode* newnode = stationnode_alloc(struct_node);
-    if(stationhead==NULL)
-    {
-        stationhead=newnode;
-        return;
-    }
-    stationhead->prev = newnode;
-    newnode->next = stationhead;
-    stationhead = newnode;
-    return;
-}
-
-/**
- *  Dinamically allocates memory for each node of the station list
- */
-stationnode* stationnode_alloc(station_data station_struct)
-{
-    stationnode *stationnode_ptr=(stationnode*)malloc(sizeof(stationnode));
-    if(stationnode_ptr==NULL)
-    {
-        printf("Error! It was not possible to allocate memory.");
-        exit(EXIT_FAILURE);
-    }
-    else
-    {
-        stationnode_ptr->prev=NULL;
-        stationnode_ptr->next=NULL;
-        stationnode_ptr->station_file=station_struct;
-    }
-    return stationnode_ptr;
-}
-
-/**
- *  Dinamically allocates memory for each node of the trip list
- */
-tripnode* tripnode_alloc(trip_data trip_structure)
-{
-    tripnode *tripnode_ptr=(tripnode*)malloc(sizeof(tripnode));
-    if(tripnode_ptr==NULL)
-    {
-        printf("Error! It was not possible to allocate memory.");
-        exit(EXIT_FAILURE);
-    }
-    else
-    {
-        tripnode_ptr->next=NULL;
-        tripnode_ptr->prev=NULL;
-        tripnode_ptr->trip_file=trip_structure;
-    }
-    return tripnode_ptr;
 }
