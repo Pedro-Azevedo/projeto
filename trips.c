@@ -337,8 +337,89 @@ void stationlisting(void)
 
 }
 
-void routelisting(void)
+void routelisting(tripnode** _triplist)
 {
+    int num=0, i=0, ins=0; //variables to 1-save the number of trips to show by page and 2-use in the cycle to print
+    char c='\0';
+    char buffer[BUFSIZE]={'\0'}; //string to get the what the user types on the screen
+    int validchoice=0; //test variable to evaluate what the user typed
+    tripnode* current=*_triplist;
+    tripnode* prev=NULL; //auxiliar node to iterate over the list (one pinter behind the current one)
+    tripnode* end=NULL;
+
+    do
+    {
+        printf("Choose one of the stations ID's\n");
+        fgets(buffer, BUFSIZE, stdin);
+        validchoice=sscanf(buffer, "%d", &num);
+        if(num<=0)
+        {
+            printf("Invalid choice\n");
+            validchoice=0;
+        }
+    }
+    while(validchoice!=1);
+
+    prev=current;
+    while(current!=NULL)
+    {
+        if(current->trip_file.stationstartID!=num && current->trip_file.stationstopID!=num)
+        {
+            RemoveNode(&current,&prev,&*_triplist);
+        }
+        else
+        {
+            prev=current; //We save the current node
+            current=current->next; //We use the pointer to the next
+        }
+    }
+
+    do
+    {
+        printf("How many trips do you want the program to show?\n");
+        fgets(buffer, BUFSIZE, stdin);
+        validchoice=sscanf(buffer, "%d", &ins);
+        if(ins<=0)
+        {
+            printf("Invalid choice\n");
+            validchoice=0;
+        }
+    }
+    while(validchoice!=1);
+
+    end=SortTripList(_triplist,num);
+    current=*_triplist;
+      // The infinite cycle serves our purpose of printing pages of num elements
+    while(1)
+    {
+        i=ins; //Reset i so that we can print more num trips
+        //We'll print the the number of trips chosen by the user and until we reach the end of the list
+        printf("\nStarting at stationID %d:\n",num);
+        while(i>0 && current!=end)
+        {
+
+            printf("%d: %s\n",current->trip_file.tripID, current->trip_file.stop->station);
+            i--;
+            current=current->next;//interate over the list
+        }
+        i=ins; //Reset i so that we can print more num trips
+
+        printf("\nEnding at stationID %d:\n",num);
+        while(i>0 && end!=NULL)
+        {
+            printf("%d: %s\n",end->trip_file.tripID, end->trip_file.start->station);
+            i--;
+            end=end->next;//interate over the list
+        }
+        //when  we reach the end, we break the cycle
+        if(current==end || end==NULL)
+            break;
+
+        printf("\n\nPress a key to continue. Press 1 to leave\n\n");
+        c=getchar();
+        if(c=='1')
+            break;
+    }
 
 }
 
@@ -346,3 +427,4 @@ void statisticslisting(void)
 {
 
 }
+
