@@ -20,7 +20,6 @@ typedef struct station
 
 
 void stationlisting(void);
-void routelisting(void);
 void load_stationfile(stationnode**, FILE*);
 stationnode* NewStationNode(station_data);
 void InsertStationList(stationnode**, station_data);
