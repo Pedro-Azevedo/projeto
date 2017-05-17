@@ -51,7 +51,7 @@ void textmode(char** argv, tripnode** _triplist, stationnode** _stationlist)
                 stationlisting();
                 break;
             case 4:
-                routelisting();
+                routelisting(_triplist);
                 break;
             case 5:
                 statisticslisting();
