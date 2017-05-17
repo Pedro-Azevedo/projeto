@@ -13,6 +13,7 @@
 
 void load_fromfiles(char* argv[], tripnode** _triplist, stationnode** _stationlist)
 {
+    stationnode* cur=NULL;
     FILE* tripsfptr=NULL; //pointer to the file of trips
     FILE* stationsfptr=NULL; //pointer to the file of stations
 
@@ -27,7 +28,13 @@ void load_fromfiles(char* argv[], tripnode** _triplist, stationnode** _stationli
 
     load_tripfile(_triplist, tripsfptr);
     load_stationfile(_stationlist, stationsfptr);
-
+    cur=*_stationlist;
+    while(cur!=NULL)
+    {
+        printf("%s\n",cur->station_file.station);
+        cur=cur->next;
+    }
+    fill_tripstations(_triplist,_stationlist);
     //Close the files
     fclose(tripsfptr);
     fclose(stationsfptr);
@@ -124,7 +131,6 @@ void load_tripfile(tripnode** _triplist, FILE* _fp)
         //Now that we have the structure we insert the node
         InsertTripList(_triplist, triptoread);
     }
-
 }
 
 /**
@@ -148,10 +154,10 @@ void load_stationfile(stationnode** _stationlist, FILE* _fp)
         token=strtok(NULL, separator);
         strcpy(stationtoread.terminal,token);
         token=strtok(NULL, separator);
-        stationtoread.station=(char*)realloc(stationtoread.station, strlen(token)+1);
+        stationtoread.station=(char*)malloc(strlen(token)+1);
         strcpy(stationtoread.station, token);
         token=strtok(NULL, separator);
-        stationtoread.municipal=(char*)realloc(stationtoread.municipal, strlen(token)+1);
+        stationtoread.municipal=(char*)malloc(strlen(token)+1);
         token=strtok(NULL, separator);
         sscanf(token, "%lf", &stationtoread.lat);
         token=strtok(NULL, separator);
@@ -219,37 +225,14 @@ stationnode* NewStationNode(station_data _station)
 
 void InsertTripList(tripnode** _headtrip, trip_data _trip)
 {
-    tripnode *current=NULL; //auxiliar node to iterate over the list
     tripnode *newnode=NULL; //the newnode to add
 
     //To create the new node
     newnode=NewTripNode(_trip);
-
-    //If the list is empty or the head stationstartID is bigger than the new node stationstartID
-    if(*_headtrip==NULL || (*_headtrip)->trip_file.stationstartID >= newnode-> trip_file.stationstartID)
-    {
-        //We set the newnode next pointer to point to the head
-        newnode->next= *_headtrip;
-        //We make the newnode the head itself
-        *_headtrip=newnode;
-    }
-
-    //The list is not empty and the head stationstartID is less than the new node stationstartID
-    else
-    {
-        current=*_headtrip;
-        //We iterate over the list until the last node different from node and until its stationstartID is less than the new node stationstartID
-        while(current->next!= NULL && current->next->trip_file.stationstartID < newnode->trip_file.stationstartID)
-        {
-            current=current->next;
-        }
-
-        //We set the newnode next pointer to point to the the element after current(it works even if it is NULL)
-        newnode->next=current->next;
-        //We set the current next pointer to point to the new node
-        current->next=newnode;
-        //No changes in the head
-    }
+    //We set the newnode next pointer to point to the head
+    newnode->next= *_headtrip;
+    //We make the newnode the head itself
+    *_headtrip=newnode;
 }
 
 /**
@@ -259,37 +242,40 @@ void InsertTripList(tripnode** _headtrip, trip_data _trip)
 */
 void InsertStationList(stationnode** _headstation, station_data _station)
 {
-    stationnode *current=NULL; //auxiliar node to iterate over the list
     stationnode *newnode=NULL; //the newnode to add
-
     //To create the new node
     newnode=NewStationNode(_station);
+    //We set the newnode next pointer to point to the head
+    newnode->next= *_headstation;
+    //We make the newnode the head itself
+    *_headstation=newnode;
 
-    //If the list is empty or the head stationID is bigger than the new node stationID
-    if(*_headstation==NULL || (*_headstation)->station_file.stationID >= newnode-> station_file.stationID)
-    {
-        //We set the newnode next pointer to point to the head
-        newnode->next= *_headstation;
-        //We make the newnode the head itself
-        *_headstation=newnode;
-    }
+}
 
-    //The list is not empty and the head stationID is less than the new node stationID
-    else
+void fill_tripstations(tripnode** _triplist, stationnode** _stationlist)
+{
+    tripnode* current_trip=NULL;
+    stationnode* current_station=NULL;
+
+    current_trip=*_triplist;
+
+    while(current_trip!=NULL)
     {
-        current=*_headstation;
-        //We iterate over the list until the last node different from node and until its stationID is less than the new node stationID
-        while(current->next!= NULL && current->next->station_file.stationID < newnode->station_file.stationID)
+        current_station=*_stationlist;
+        while(current_station!=NULL)
         {
-            current=current->next;
+            if(current_station->station_file.stationID==current_trip->trip_file.stationstartID)
+            {
+                current_trip->trip_file.start=&(current_station->station_file);
+            }
+            if(current_station->station_file.stationID==current_trip->trip_file.stationstopID)
+            {
+                current_trip->trip_file.stop=&(current_station->station_file);
+            }
+            current_station=current_station->next; //We use the pointer to the next
         }
-        //We set the newnode next pointer to point to the the element after current(it works even if it is NULL)
-        newnode->next=current->next;
-        //We set the current next pointer to point to the new node
-        current->next=newnode;
-        //No changes in the head
+        current_trip=current_trip->next;
     }
-
 }
 
 /**
@@ -491,7 +477,7 @@ tripnode* RemoveUsingMaxduration(int _maxduration, tripnode* _headtrip)
     {
         if(current->trip_file.timespan>_maxduration)
         {
-           RemoveNode(&current,&prev,&_headtrip);
+            RemoveNode(&current,&prev,&_headtrip);
         }
         else
         {
@@ -537,4 +523,39 @@ void RemoveNode(tripnode** _current, tripnode** _prev, tripnode** _headtrip)
         //We free the memory
         free(_temp);
     }
+}
+
+/**
+* RemoveNode function: function that sorts the station list separating the ones that start in the station from the ones that end.
+* Note: this function also puts the starting stations according to its ID and the ending station in an inverse form
+* \param trip_head --> the head node of the list (the list itself passed by reference)
+* \param stationID --> the inserted ID for the station
+*/
+tripnode* SortTripList(tripnode** trip_head, int station_ID)
+{
+    int notSaved=0;
+    tripnode* current=*trip_head;
+    tripnode* end=NULL;
+    tripnode* prev=NULL;
+
+    while(current!=NULL)
+    {
+        if(current!=*trip_head && current->trip_file.stationstartID==station_ID)
+        {
+            prev->next=current->next;
+            current->next=*trip_head;
+            //We make the node starting at that station the head itself
+            *trip_head=current;
+            current=prev;
+        }
+        if(notSaved==0 && current->trip_file.stationstopID==station_ID)
+        {
+            notSaved=1;
+            end=current;
+        }
+        prev=current;
+        current=current->next;
+    }
+    prev->next=NULL;
+    return end;
 }
