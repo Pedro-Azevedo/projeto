@@ -3,7 +3,7 @@
 #include <string.h>
 
 #include "trips.h"
-
+#include "listings.h"
 /**
 * ĺoad_fromfiles function: to load the files into the lists
 * \param argv --> parameters of main function
@@ -13,7 +13,6 @@
 
 void load_fromfiles(char* argv[], tripnode** _triplist, stationnode** _stationlist)
 {
-    stationnode* cur=NULL;
     FILE* tripsfptr=NULL; //pointer to the file of trips
     FILE* stationsfptr=NULL; //pointer to the file of stations
 
@@ -28,12 +27,7 @@ void load_fromfiles(char* argv[], tripnode** _triplist, stationnode** _stationli
 
     load_tripfile(_triplist, tripsfptr);
     load_stationfile(_stationlist, stationsfptr);
-    cur=*_stationlist;
-    while(cur!=NULL)
-    {
-        printf("%s\n",cur->station_file.station);
-        cur=cur->next;
-    }
+
     fill_tripstations(_triplist,_stationlist);
     //Close the files
     fclose(tripsfptr);
@@ -252,6 +246,10 @@ void InsertStationList(stationnode** _headstation, station_data _station)
 
 }
 
+/**
+* fill_tripstations function: fills each trip structure with the corresponding stations
+* \param _triplist, _stationlist --> the head nodes of the lists (the list itself passed by reference)
+*/
 void fill_tripstations(tripnode** _triplist, stationnode** _stationlist)
 {
     tripnode* current_trip=NULL;
@@ -261,20 +259,23 @@ void fill_tripstations(tripnode** _triplist, stationnode** _stationlist)
 
     while(current_trip!=NULL)
     {
+        //resets the current station to the top of the list
         current_station=*_stationlist;
         while(current_station!=NULL)
         {
+            //if the current station is the same as the start station a pointer to its structure is set
             if(current_station->station_file.stationID==current_trip->trip_file.stationstartID)
             {
                 current_trip->trip_file.start=&(current_station->station_file);
             }
+            //if the current station is the same as the stop station a pointer to its structure is set
             if(current_station->station_file.stationID==current_trip->trip_file.stationstopID)
             {
                 current_trip->trip_file.stop=&(current_station->station_file);
             }
-            current_station=current_station->next; //We use the pointer to the next
+            current_station=current_station->next; //We use the pointer to the next to itinerate over the stations
         }
-        current_trip=current_trip->next;
+        current_trip=current_trip->next; //We use the pointer to the next to itinerate over the trips
     }
 }
 
@@ -523,39 +524,4 @@ void RemoveNode(tripnode** _current, tripnode** _prev, tripnode** _headtrip)
         //We free the memory
         free(_temp);
     }
-}
-
-/**
-* RemoveNode function: function that sorts the station list separating the ones that start in the station from the ones that end.
-* Note: this function also puts the starting stations according to its ID and the ending station in an inverse form
-* \param trip_head --> the head node of the list (the list itself passed by reference)
-* \param stationID --> the inserted ID for the station
-*/
-tripnode* SortTripList(tripnode** trip_head, int station_ID)
-{
-    int notSaved=0;
-    tripnode* current=*trip_head;
-    tripnode* end=NULL;
-    tripnode* prev=NULL;
-
-    while(current!=NULL)
-    {
-        if(current!=*trip_head && current->trip_file.stationstartID==station_ID)
-        {
-            prev->next=current->next;
-            current->next=*trip_head;
-            //We make the node starting at that station the head itself
-            *trip_head=current;
-            current=prev;
-        }
-        if(notSaved==0 && current->trip_file.stationstopID==station_ID)
-        {
-            notSaved=1;
-            end=current;
-        }
-        prev=current;
-        current=current->next;
-    }
-    prev->next=NULL;
-    return end;
 }

@@ -18,8 +18,6 @@ typedef struct station
     struct station *next;
 } stationnode;
 
-
-void stationlisting(void);
 void load_stationfile(stationnode**, FILE*);
 stationnode* NewStationNode(station_data);
 void InsertStationList(stationnode**, station_data);

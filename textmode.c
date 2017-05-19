@@ -5,7 +5,7 @@
 //We include our header file
 #include "trips.h"
 #include "argtest.h"
-
+#include "listings.h"
 
 /**
  * Text mode function
@@ -60,5 +60,4 @@ void textmode(char** argv, tripnode** _triplist, stationnode** _stationlist)
                 return;//breaks the infinite cycle
         }
     }
-
 }

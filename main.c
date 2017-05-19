@@ -17,7 +17,6 @@ int main(int argc, char*argv[])
     stationnode* stationlist=NULL;
 
     //Load the files into the lists
-    printf("Loading the files...\n");
     load_fromfiles(argv, &triplist, &stationlist);
 
     //Start the text mode
@@ -43,5 +42,3 @@ int main(int argc, char*argv[])
 
     return EXIT_SUCCESS;
 }
-
-
