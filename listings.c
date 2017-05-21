@@ -19,7 +19,7 @@ void triplisting(tripnode** _triplist)
     char c='\0'; //character to leave the cycle of printing or print more
     char buffer[BUFSIZE]= {'\0'}; //string to get the what the user types on the screen
     int validchoice=0; //test variable to evaluate what the user typed
-    tripnode* current=NULL; //auxiliar node to iterate over the list of trips
+    tripnode* current=NULL; //auxiliar pointer to iterate over the list of trips
     do
     {
         printf("How many trips do you want the program to show?\n");
@@ -90,21 +90,125 @@ void triplisting(tripnode** _triplist)
 
 }
 
-void stationlisting(void)
+
+void stationlisting(tripnode** _triplist, stationnode** _stationlist)
 {
+    int start[STATIONMAX][HOURS]={'\0'};
+    int end[STATIONMAX][HOURS]={'\0'};
+    int j=0;
+    int maxbikesstart=0;
+    int minbikesstart=0;
+    int maxbikesstop=0;
+    int minbikesstop=0;
+    int sumbikesstart=0;
+    int sumbikesstop=0;
+    float averbikesstart=0.0f;
+    float averbikesstop=0.0f;
+    stationnode* current=NULL;
+    tripnode* it=NULL;
+
+    it=*_triplist;
+
+    while(it!=NULL)
+    {
+        start[it->trip_file.stationstartID][it->trip_file.timebegin.hour]++;
+        end[it->trip_file.stationstopID][it->trip_file.timeend.hour]++;
+        it=it->next;
+    }
+
+
+    current=*_stationlist;
+
+    while(current!=NULL && current->station_file.stationID!=0)
+    {
+        j=0;
+        while(j<HOURS+1)
+        {
+            if(start[current->station_file.stationID][j]!=0 || end[current->station_file.stationID][j]!=0)
+                break;
+            j++;
+        }
+
+        if(j!=HOURS)
+        {
+            printf("\n");
+            printf("Station ID: %d\n", current->station_file.stationID);
+            printf("Terminal: %s\n", current->station_file.terminal);
+            printf("Station: %s\n", current->station_file.station);
+            printf("Municipal: %s\n", current->station_file.municipal);
+            printf("Latitude: %f\n", current->station_file.lat);
+            printf("Longitude: %f\n", current->station_file.lng);
+
+            maxbikesstart=start[current->station_file.stationID][0];
+            minbikesstart=start[current->station_file.stationID][0];
+            sumbikesstart=0;
+            maxbikesstop=end[current->station_file.stationID][0];
+            minbikesstop=end[current->station_file.stationID][0];
+            sumbikesstop=0;
+
+            for(j=1; j<HOURS+1; j++)
+            {
+                if(maxbikesstart<start[current->station_file.stationID][j])
+                    maxbikesstart=start[current->station_file.stationID][j];
+
+                if(minbikesstart>start[current->station_file.stationID][j])
+                    minbikesstart=start[current->station_file.stationID][j];
+
+                if(maxbikesstop<end[current->station_file.stationID][j])
+                    maxbikesstop=end[current->station_file.stationID][j];
+
+                if(minbikesstop>end[current->station_file.stationID][j])
+                    minbikesstop=end[current->station_file.stationID][j];
+
+                sumbikesstart+=start[current->station_file.stationID][j];
+                sumbikesstop+=end[current->station_file.stationID][j];
+            }
+
+            averbikesstart=(float)sumbikesstart/HOURS;
+            averbikesstop=(float)sumbikesstop/HOURS;
+
+
+            printf("Maximum number of bikes leaving: %d\n", maxbikesstart);
+            printf("Minimum number of bikes leaving: %d\n", minbikesstart);
+            printf("Average number of bikes leaving: %f\n", averbikesstart);
+            printf("Maximum number of bikes arriving: %d\n", maxbikesstop);
+            printf("Minimum number of bikes arriving: %d\n", minbikesstop);
+            printf("Average number of bikes arriving: %f\n", averbikesstop);
+
+        }
+
+        current=current->next;
+
+    }
+
+    printf("\n \n \n");
+
+/*
+    for(i=0; i<70; i++)
+    {
+        printf("STATION:%d\n", i);
+        for(j=0; j<HOURS; j++)
+        {
+            printf("%d\t", start[i][j]);
+        }
+
+        printf("\n");
+    }*/
 
 }
 
 void routelisting(tripnode** _triplist)
 {
-    int num=0, ins=0, station=0; //variables to 1-save the number of trips to show by page and 2-use in the cycle to print;
+    int num=0, ins=0; //variables to 1-save the station ID, 2-save the number of trips to show
+    int station=0;//variable to save a station ID. Zero if there is no station.
     char buffer[BUFSIZE]= {'\0'}; //string to get the what the user types on the screen
     int stationarrive[STATIONMAX]= {0}, stationdepart[STATIONMAX]= {0};// vectors that contain the number of trips to a station (vector position=stationID)
-    int tempstation[STATIONMAX]= {0}, tempstation2[STATIONMAX]= {0}; //temporary vectors are used so that stations already ordered can be erased
+    int tempstation[STATIONMAX]= {0}, tempstation2[STATIONMAX]= {0}; //temporary vectors that also contain that so that we can manipulate data without losing it
     int validchoice=0; //test variable to evaluate what the user typed
-    tripnode* current=*_triplist;
-    tripnode* prev=NULL; //auxiliar node to iterate over the list (one pinter behind the current one)
-    tripnode* end=NULL;
+    tripnode* current=NULL; //auxiliar pointer to iterate over the list
+    tripnode* prev=NULL; //auxiliar pointer to iterate over the list (one pointer behind the current one)
+    tripnode* stopbegin=NULL; //auxiliar pointer that will help us distinguish in the sorted list when the stationID chosen is correspondent to a start station or a stop station
+    int i=0; //variable for cycles
 
     do
     {   //menu for route choosing and number of routes per page
@@ -120,56 +224,95 @@ void routelisting(tripnode** _triplist)
     }
     while(validchoice!=2);
 
-    //initial selection erases repeated routes (same origin and destination) and routes that dont contain the station
+    //We start by organizing our trip list to make it easier to print data later
+
+    current=*_triplist;
     prev=current;
+
     while(current!=NULL)
-    {   //if it does not contain the station the node is removed
+    {
+        //If the current trip does not contain the chosen station, the node is removed
         if(current->trip_file.stationstartID!=num && current->trip_file.stationstopID!=num)
         {
             RemoveNode(&current,&prev,_triplist);
         }
+
+        //If the current trip contains the chosen station as start
         else if(current->trip_file.stationstartID==num)
-        {   //if it contains the station as origin the vector position of the destination station is incremented
+        {
+            //If it matched the start station of the current trip, then we
+            // (1) Increment the respective position of the stop station in the tempstation vector;
+            // (2) Increment the respective position of the stop station in the stationdepart vector;
             tempstation[current->trip_file.stationstopID]++;
             stationdepart[current->trip_file.stationstopID]++;
+
+            //If the station has already been incremented (already exists, the trip is removed from the list)
+            //This will avoid repetitions in printing
             if(stationdepart[current->trip_file.stationstopID] > 1)
-                RemoveNode(&current,&prev,_triplist); //if the station has already been incremented (already exists its repetition is removed)
+                RemoveNode(&current,&prev,_triplist);
+
+
             else
-            {   //if the station has not been analyzed yet
+            {
                 prev=current; //We save the current node
-                current=current->next; //We use the pointer to the next
+                current=current->next; //We go to the next node
             }
+
         }
+
         else
-        {   //if it contains the station as dest the vector position of the origin station is incremented
+        {
+            //If it matched the stop station of the current trip, then we
+            // (1) Increment the respective position of the start station in the tempstation2 vector;
+            // (2) Increment the respective position of the start stationin the stationarrive vector;
             tempstation2[current->trip_file.stationstartID]++;
             stationarrive[current->trip_file.stationstartID]++;
+
+            //if the station has already been incremented (already exists, the trip is removed from the list)
             if(stationarrive[current->trip_file.stationstartID] > 1)
-                RemoveNode(&current,&prev,_triplist); //if the station has already been incremented (already exists its repetition is removed)
+                RemoveNode(&current,&prev,_triplist);
+
+            //if the station has not been analyzed yet
             else
-            {   //if the station has not been analyzed yet
+            {
                 prev=current; //We save the current node
                 current=current->next; //We use the pointer to the next
             }
+
         }
+
     }
-    end=SortTripList(_triplist,num);
-    for(int i=0; i<STATIONMAX; i++)
-    {   //this loops sends (from the highest to the lowest) stations to the end so that in the end they are ordered
-        station=order_bynumber(_triplist,end,tempstation);
-        tempstation[station]=0; //its value in the temporary vector is erased so it is not re-ordered
-        if(station==0) //if the station value is 0 there are no more stations to be ordered
-            break;
-    }
-    for(int i=0; i<STATIONMAX; i++)
-    {   //the same loop is repeated now for the 2nd group (contain the inserted station as destination)
-        station=order_bynumber(&end,NULL,tempstation2);
-        tempstation2[station]=0;
+
+
+    //What remains of our trip list will now be sorted to differentiate the trips that our station as start station or as stop station
+    stopbegin=SortTripList(_triplist,num);
+
+
+    //Now we will sort the list again, ordering it by number of trips to the stop station
+    for(i=0; i<STATIONMAX; i++)
+    {
+
+        station=order_bynumber(_triplist,stopbegin,tempstation);
+        //the station value in the temporary vector is erased so it is not re-ordered
+        tempstation[station]=0;
+
+        //if the station value is 0 there are no more stations to be ordered
         if(station==0)
             break;
     }
-    //station values are printed
-    print_routelist(_triplist,end,ins,num,stationdepart,stationarrive);
+
+    //We do the same now ordering the start stations by number of trips
+    for(i=0; i<STATIONMAX; i++)
+    {
+        station=order_bynumber(&stopbegin,NULL,tempstation2);
+        tempstation2[station]=0;
+
+        if(station==0)
+            break;
+    }
+
+    //We finally print the routes
+    print_routelist(_triplist,stopbegin,ins,num,stationdepart,stationarrive);
 }
 
 void statisticslisting(void)
@@ -181,19 +324,22 @@ void statisticslisting(void)
 * Note: from this point items that start on station_ID and items that end on station_ID will be mostly threated as two sublists
 * \param trip_head --> the head node of the list (the list itself passed by reference)
 * \param stationID --> the inserted ID for the station
-* It returns a pointer to the beggining of the end stations
+* It returns a pointer to the beginning of the end stations
 */
 tripnode* SortTripList(tripnode** trip_head, int station_ID)
 {
     int notSaved=0; //auxiliar flag to indicate the first node of the stopstations
-    tripnode* current=*trip_head;
-    tripnode* end=NULL;
-    tripnode* prev=NULL;
+    tripnode* current=*trip_head; //auxiliar pointer to iterate over the list
+    tripnode* end=NULL; //node to save the begin of the second sublist
+    tripnode* prev=NULL; //auxiliar pointer to iterate over the list (one node behind current)
 
     while(current!=NULL)
-    {   //if the node is not already the head of the list and it starts at the inserted station
+    {
+        //if the node is not already the head of the list and it starts at the inserted station
+
         if(current!=*trip_head && current->trip_file.stationstartID==station_ID)
-        {   //the node is removed from the middle of the list
+        {
+            //the node is removed from the middle of the list
             prev->next=current->next;
             current->next=*trip_head;
             //We make the node starting at that station the head itself
@@ -201,11 +347,14 @@ tripnode* SortTripList(tripnode** trip_head, int station_ID)
             //we continue counting from where we were
             current=prev;
         }
+
         if(notSaved==0 && current->trip_file.stationstopID==station_ID)
-        {   //if it is the first node with the stop station its pointer is saved to end and the flag is turned "off"
+        {
+            //if it is the first node with the stop station its pointer is saved to end and the flag is turned "off"
             notSaved=1;
             end=current;
         }
+
         prev=current;
         current=current->next;
     }
@@ -221,62 +370,89 @@ tripnode* SortTripList(tripnode** trip_head, int station_ID)
 */
 int order_bynumber(tripnode** depart_head, tripnode* arrive_head, int depart_val[STATIONMAX])
 {
-    int i=0, hightrip=0, highstation=0 ;
-    tripnode* cur=*depart_head;
-    tripnode* prev=cur;
-    tripnode* depart_tail=NULL;
-    //search for the pointer to the last member of the group (start/ending stations)
+    int i=0; //variable to use in cycles
+    int hightrip=0, highstation=0; //variables to save data (1) the maximum number of trips and (2) the index of the trip to put on top
+    tripnode* cur=NULL; //auxiliar pointer to iterate over the list
+    tripnode* prev=NULL;//auxiliar pointer to iterate over the list (one node behind the current node)
+    tripnode* depart_tail=NULL; //auxiliar pointer to save the cur node
+
+    cur=*depart_head;
+    prev=cur;
+
+    //We go all over the list until we find the end of the sublist we're considering
     while(cur!=arrive_head)
-    {   //while we dont get to the first pointer of the other group or the NULL pointer we save the cur
+    {
+         //while we don't get to the first pointer of the other sublist or to the NULL pointer, we save the cur
         depart_tail=cur;
         cur=cur->next;
     }
+
     //search for the station with most trips number in the vector
     for(i=0; i<STATIONMAX; i++)
-    {   //stationmax is set to 100 in case new stations are added
+    {
+
         if(depart_val[i]>hightrip)
-        {   //in the case where there are more trips than the ones in the highstation'th position
-            //we save their values for further comparisons and their position
+        {
+            //in the case where there are more trips than the ones in the highstation'th position
+            //we save their values for further comparisons and we also save their positions
             hightrip=depart_val[i];
             highstation=i;
         }
+
     }
-    //in case there are no more stations highstation will be 0 so we return
+
+    //in case there are no more stations highstation will be 0 so we return'immediately
     if(highstation==0)
         return 0;
-    //we re-assign the head pointer to cur
+
+    //we reassign cur to the the begin of the sublist
     cur=*depart_head;
-    //in the case where arrive_head is NULL we are attending the group that stops at the station
+
+    //in the case where arrive_head is NULL we are considering the second sublist (that considers the chosen station as a stop station)
+    //then we attribute i to the stationstartID of the begin of the sublist
     if(arrive_head==NULL)
         i=cur->trip_file.stationstartID;
-    //in the other case we are attending the group that starts at the station
+
+    //in the other case we are considering the group that has the chosen station as a start station
+    //then we attribute i to the stationstartID of the begin of the sublist
     else
         i=cur->trip_file.stationstopID;
 
+
     //we now go through the list to find the route that corresponds to the found station
     while(i!=highstation)
-    {   //we save the prev pointer for further use and itinerate over the list
+    {
+        //we save the prev pointer for further use and iterate over the list
         prev=cur;
         cur=cur->next;
+
         //i var is always reset for the new station
         if(arrive_head==NULL)
             i=cur->trip_file.stationstartID;
+
         else
             i=cur->trip_file.stationstopID;
+
     }
+
     //once we get the item with the most stations we want to send it to the end of the group
+
+    //if it is not the head of the sublist we simply make the list jump over it and set it to the end
     if(cur!=*depart_head)
-    {   //if it is not the group head of the group we simply make the list jump over it and set it to the end
+    {
         prev->next=cur->next;
         depart_tail->next=cur;
         cur->next=arrive_head;
     }
+
+    //if it is the head of the sublist we assign a new head and send it to the end
     else
-    {   //if it is the head of the group we assign a new head and send it to the end
+    {
         depart_tail->next=cur;
         *depart_head=cur->next;
         cur->next=arrive_head;
     }
+
     //highstation is returned so we can set its value to 0 and continue to the following higher value
     return highstation;
 }
@@ -292,42 +468,58 @@ int order_bynumber(tripnode** depart_head, tripnode* arrive_head, int depart_val
  */
 void print_routelist(tripnode** _triplist, tripnode* end, int ins, int num, int stationdepart[STATIONMAX], int stationarrive[STATIONMAX])
 {
-    tripnode* current=*_triplist;
-    int i;
+    tripnode* current=NULL; //auxiliar pointer to iterate over the list
+    int i;//auxiliar variable for printing routes
     char c;
-    // The infinite cycle serves our purpose of printing pages of num elements
+
+    current=*_triplist;
+
+    // The infinite cycle serves our purpose of printing pages of ins elements
     while(1)
     {
-        i=ins; //Reset i so that we can print more num trips
+        //Reset i so that we can print more ins trips
+        i=ins;
+
         //We'll print the the number of trips chosen by the user and until we reach the end of the list
         printf("\nStarting at stationID %d:\n",num);
+
         while(i>0 && current!=end)
         {
 
             printf("%d: %s",current->trip_file.stationstopID, current->trip_file.stop->station);
             printf(" (%d trips)\n",stationdepart[current->trip_file.stationstopID]);
             i--;
-            current=current->next;//interate over the list
+            current=current->next;//iterate over the list
         }
-        i=ins; //Reset i so that we can print more num trips
 
-        printf("\nEnding at stationID %d:\n",num);
+        //Reset i so that we can print more ins trips
+        i=ins;
+
+        printf("\nStopping at stationID %d:\n",num);
+
         while(i>0 && end!=NULL)
         {
+
             printf("%d: %s",end->trip_file.stationstartID, end->trip_file.start->station);
             printf(" (%d trips)\n",stationarrive[end->trip_file.stationstartID]);
             i--;
-            end=end->next;//interate over the list
+            end=end->next;//iterate over the list
+
         }
+
         //when  we reach the end, we break the cycle
+
         if(current==end || end==NULL)
             break;
 
+
         printf("\n\nPress ENTER to continue. Press 1 to leave\n\n");
+
         c=getchar();
+
         if(c=='1')
             break;
 
-        i=ins; //Reset i so that we can print more num trips
+        i=ins; //Reset i so that we can print more ins trips
     }
 }

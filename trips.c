@@ -7,6 +7,7 @@
 #include "argtest.h"
 #include "listings.h"
 
+
 /**
  * dataselection function: it allows the user to select some parameters about the travels to list
  * \param _all --> to decide to display all the travels or just some that verify one or more criteria
@@ -78,7 +79,7 @@ void criterion (ttime* _begin, ttime* _end, int* _weekday, int* _maxduration, tr
             (*_maxduration)=criterion3(_triplist);
             break;
         case 4:
-            ClearData(argv, _triplist, _stationlist);
+            ClearData(argv, _triplist, _stationlist, 0);
             break;
         case 5:
             return; //breks the infinite cycle
@@ -219,29 +220,37 @@ int criterion3(tripnode** _triplist)
 * \param _stationlist --> the list of stations (passed by reference)
 */
 
-void ClearData(char** argv, tripnode** _triplist, stationnode** _stationlist)
+void ClearData(char** argv, tripnode** _triplist, stationnode** _stationlist, int _ending)
 {
     //We start by clearing the lists
 
-    tripnode* aux1; //auxiliar node to iterate over the list of trips
+    //Free the lists memory
+    tripnode* aux1;
+    tripnode* erase1;
     aux1=*_triplist;
     while(aux1!=NULL)
     {
+        erase1=aux1;
         aux1=aux1->next;
-        free(aux1);
+        free(erase1);
     }
 
-    stationnode* aux2; //auxiliar node to iterate over the list of stations
+    stationnode* aux2;
+    stationnode* erase2;
     aux2=*_stationlist;
     while(aux2!=NULL)
     {
+        erase2=aux2;
         aux2=aux2->next;
-        free(aux2);
+        free(erase2);
     }
 
     *_stationlist=NULL;
     *_triplist=NULL;
 
-    load_fromfiles(argv, _triplist, _stationlist);
+    //Then we load them again if we're not ending the program
+    if(_ending==0)
+        load_fromfiles(argv, _triplist, _stationlist);
 
 }
+

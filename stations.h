@@ -1,6 +1,9 @@
 #ifndef STATIONS_H_INCLUDED
 #define STATIONS_H_INCLUDED
 
+
+#define HOURS 24
+
 typedef struct
 {
     int stationID;

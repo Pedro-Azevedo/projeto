@@ -1,3 +1,18 @@
+/*************************************************************
+
+Projeto Final de Programação 2º Semestre 2016/2017
+
+AUTORES:    Diogo Costa, nº 86971
+            Pedro Azevedo, nº 84396
+
+DATA: 25/05/2017
+
+Implementação do programa Bikestation, de tratamento de dados
+sobre viagens/estações de bicicleta de Boston
+
+***************************************************************/
+
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -15,30 +30,29 @@ int main(int argc, char*argv[])
     //Define the pointers to our lists
     tripnode* triplist=NULL;
     stationnode* stationlist=NULL;
+    stationnode *teste;
 
-    //Load the files into the lists
     load_fromfiles(argv, &triplist, &stationlist);
+
+    teste=stationlist;
+    while(teste!=NULL)
+    {
+        printf("%s\n", teste->station_file.station);
+        teste=teste->next;
+    }
 
     //Start the text mode
     if(strcmp(argv[1], "-t")==0)
         textmode(argv, &triplist, &stationlist);
 
-    //Free the lists memory
-    tripnode* aux1;
-    aux1=triplist;
-    while(aux1!=NULL)
-    {
-        aux1=aux1->next;
-        free(aux1);
-    }
+    //Start the graphic mode
+    if(strcmp(argv[1], "-g")==0)
+        graphicmode();
 
-    stationnode* aux2;
-    aux2=stationlist;
-    while(aux2!=NULL)
-    {
-        aux2=aux2->next;
-        free(aux2);
-    }
+    //Free the lists memory
+    ClearData(argv, &triplist, &stationlist, 1);
 
     return EXIT_SUCCESS;
 }
+
+

@@ -1,7 +1,7 @@
 #ifndef TRIPS_H_INCLUDED
 #define TRIPS_H_INCLUDED
 #define BUFSIZE 1000
-#define STATIONMAX 100
+#define STATIONMAX 1000
 #include "stations.h"
 
 typedef struct
@@ -58,7 +58,7 @@ int testchoice(int);
 void criterion1(ttime*, ttime*, tripnode**);
 int criterion2(tripnode**);
 int criterion3(tripnode**);
-void ClearData(char**, tripnode**, stationnode**);
+void ClearData(char**, tripnode**, stationnode**, int);
 void load_fromfiles(char**, tripnode**, stationnode**);
 void load_tripfile(tripnode**, FILE*);
 tripnode* NewTripNode(trip_data);

@@ -4,6 +4,7 @@
 
 #include "trips.h"
 #include "listings.h"
+
 /**
 * ĺoad_fromfiles function: to load the files into the lists
 * \param argv --> parameters of main function
@@ -27,8 +28,8 @@ void load_fromfiles(char* argv[], tripnode** _triplist, stationnode** _stationli
 
     load_tripfile(_triplist, tripsfptr);
     load_stationfile(_stationlist, stationsfptr);
+    fill_tripstations(_triplist, _stationlist);
 
-    fill_tripstations(_triplist,_stationlist);
     //Close the files
     fclose(tripsfptr);
     fclose(stationsfptr);
@@ -45,10 +46,10 @@ void load_tripfile(tripnode** _triplist, FILE* _fp)
 {
     trip_data triptoread; //data for each node of the list
     char separator[]=",/:"; //separator for strtok
-    char buffer[BUFSIZE]= {'\0'}; // string to save the lines of the file
-    char string1[BUFSIZE]= {'\0'}; // auxiliar string to break buffer
-    char string2[BUFSIZE]= {'\0'}; // auxiliar string to break buffer
-    char string3[BUFSIZE]= {'\0'}; // auxiliar string to break buffer
+    char buffer[BUFSIZE]={'\0'}; // string to save the lines of the file
+    char string1[BUFSIZE]={'\0'}; // auxiliar string to break buffer
+    char string2[BUFSIZE]={'\0'}; // auxiliar string to break buffer
+    char string3[BUFSIZE]={'\0'}; // auxiliar string to break buffer
     char* token=NULL; //auxiliar pointer to apply strtok
     char* help=NULL; //auxiliar pointer to apply strtol
 
@@ -125,10 +126,11 @@ void load_tripfile(tripnode** _triplist, FILE* _fp)
         //Now that we have the structure we insert the node
         InsertTripList(_triplist, triptoread);
     }
+
 }
 
 /**
-* ĺoad_statuionfile function: to create the list of stations
+* ĺoad_stationfile function: to create the list of stations
 * \param _stationlist --> the list of stations (passed by reference)
 * \param _fp --> the file
 */
@@ -137,7 +139,7 @@ void load_stationfile(stationnode** _stationlist, FILE* _fp)
 {
     station_data stationtoread;//data for each node of the list
     char separator[]=",";//separator for strtok
-    char buffer[BUFSIZE]= {'\0'}; // string to save the lines of the file
+    char buffer[BUFSIZE]={'\0'};// string to save the lines of the file
     char* token=NULL;//auxiliar pointer to apply strtok
     char* help=NULL;//auxiliar pointer to apply strtol
 
@@ -148,10 +150,11 @@ void load_stationfile(stationnode** _stationlist, FILE* _fp)
         token=strtok(NULL, separator);
         strcpy(stationtoread.terminal,token);
         token=strtok(NULL, separator);
-        stationtoread.station=(char*)malloc(strlen(token)+1);
+        stationtoread.station=(char*)realloc(stationtoread.station, (strlen(token)+1)*sizeof(char));
         strcpy(stationtoread.station, token);
         token=strtok(NULL, separator);
-        stationtoread.municipal=(char*)malloc(strlen(token)+1);
+        stationtoread.municipal=(char*)realloc(stationtoread.municipal, (strlen(token)+1)*sizeof(char));
+        strcpy(stationtoread.municipal, token);
         token=strtok(NULL, separator);
         sscanf(token, "%lf", &stationtoread.lat);
         token=strtok(NULL, separator);
@@ -162,7 +165,7 @@ void load_stationfile(stationnode** _stationlist, FILE* _fp)
         else
             stationtoread.status=0;
 
-        //Now that we have the structure we insert the node
+         //Now that we have the structure we insert the node
         InsertStationList(_stationlist, stationtoread);
     }
 }
@@ -176,6 +179,7 @@ void load_stationfile(stationnode** _stationlist, FILE* _fp)
 tripnode* NewTripNode(trip_data _trip)
 {
     tripnode* newnode=NULL; //the newnode to return
+    //dinamically allocate memory for the new node and test if it went correctly
     newnode=(tripnode*)malloc(sizeof(tripnode));
     if(newnode==NULL)
     {
@@ -183,8 +187,8 @@ tripnode* NewTripNode(trip_data _trip)
         exit(EXIT_FAILURE);
     }
 
-    newnode->trip_file=_trip;
-    newnode->next=NULL;
+    newnode->trip_file=_trip; //attach the structure _trip to the node
+    newnode->next=NULL; //make the next pointer of the node pointing to NULL
 
     return newnode;
 }
@@ -198,6 +202,7 @@ tripnode* NewTripNode(trip_data _trip)
 stationnode* NewStationNode(station_data _station)
 {
     stationnode* newnode=NULL; //the newnode to return
+    //dinamically allocate memory for the new node and test if it went correctly
     newnode=(stationnode*)malloc(sizeof(stationnode));
     if(newnode==NULL)
     {
@@ -205,20 +210,21 @@ stationnode* NewStationNode(station_data _station)
         exit(EXIT_FAILURE);
     }
 
-    newnode->station_file=_station;
-    newnode->next=NULL;
+    newnode->station_file=_station; //attach the structure _station to the node
+    newnode->next=NULL; //make the next pointer of the node pointing to NULL
 
     return newnode;
 }
 
 /**
-* InsertTripList function: to add nodes in the list in crescent order of stationstartID
+* InsertTripList function: to add nodes in the list of trips
 * \param _headtrip --> the head node of the list (the list itself passed by reference)
 * \param _trip --> the trip structure
 */
 
 void InsertTripList(tripnode** _headtrip, trip_data _trip)
 {
+    /*Our strategy here is to always make the new nodes the head itself so our last node will be the first in the list*/
     tripnode *newnode=NULL; //the newnode to add
 
     //To create the new node
@@ -230,12 +236,13 @@ void InsertTripList(tripnode** _headtrip, trip_data _trip)
 }
 
 /**
-* InsertSationList function: to add nodes in the list in crescent order of stationID
+* InsertSationList function: to add nodes in the list
 * \param _headstation --> the head node of the list (the list itself passed by reference)
 * \param _station --> the station structure
 */
 void InsertStationList(stationnode** _headstation, station_data _station)
 {
+    /*Our strategy here is to always make the new nodes the head itself so our last node will be the first in the list*/
     stationnode *newnode=NULL; //the newnode to add
     //To create the new node
     newnode=NewStationNode(_station);
@@ -252,40 +259,54 @@ void InsertStationList(stationnode** _headstation, station_data _station)
 */
 void fill_tripstations(tripnode** _triplist, stationnode** _stationlist)
 {
-    tripnode* current_trip=NULL;
-    stationnode* current_station=NULL;
+    tripnode* current_trip=NULL; //auxiliar pointer to iterate over the trip list
+    stationnode* current_station=NULL; //auxiliar pointer to iterate over the station list
+    int matched=0; //a flag to stop us from iterating over the stations if both of the start and stop ones are already attached to the
+                   //respective trip
 
+    //We set the auxiliar pointer to point to the top of the trip list
     current_trip=*_triplist;
 
+    //We iterate over the list until the pointer points to NULL (the list just ended)
     while(current_trip!=NULL)
     {
         //resets the current station to the top of the list
         current_station=*_stationlist;
+        matched=0;
         while(current_station!=NULL)
         {
-            //if the current station is the same as the start station a pointer to its structure is set
+           //Now if the stationID of the current station is equal to the station start ID of the current trip
+           //We then make the pointer start of the current trip to point to the entire station structure (by passing its address)
             if(current_station->station_file.stationID==current_trip->trip_file.stationstartID)
             {
                 current_trip->trip_file.start=&(current_station->station_file);
+                matched++;
             }
-            //if the current station is the same as the stop station a pointer to its structure is set
+            //Now if the stationID of the current station is equal to the station stop ID of the current trip
+           //We then make the pointer stop of the current trip to point to the entire station structure (by passing its address)
             if(current_station->station_file.stationID==current_trip->trip_file.stationstopID)
             {
                 current_trip->trip_file.stop=&(current_station->station_file);
+                matched++;
             }
-            current_station=current_station->next; //We use the pointer to the next to itinerate over the stations
+
+            if(matched==2)
+                break;
+
+            current_station=current_station->next;
         }
-        current_trip=current_trip->next; //We use the pointer to the next to itinerate over the trips
+
+        current_trip=current_trip->next;
     }
 }
 
+
 /**
 * RemoveUsingHour function: to remove form the list using the hour criterion
-* \param _headtrip --> the head node of the list (the list itself passed by reference)
-* \param _begin --> structure with the selected initial time
-* \param _end --> structure with the selected final time
-* It returns the updated headnode
+* \param _headstation --> the head node of the list (the list itself passed by reference)
+* \param _station --> the station structure
 */
+
 tripnode* RemoveUsingHour(ttime* _begin, ttime* _end, tripnode* _headtrip)
 {
     tripnode* current=NULL; //auxiliar node to iterate over the list
@@ -303,9 +324,9 @@ tripnode* RemoveUsingHour(ttime* _begin, ttime* _end, tripnode* _headtrip)
 
     while(current!=NULL)
     {
-        if((current->trip_file.timebegin.hour<_begin->hour || current->trip_file.timeend.hour>=_end->hour) || current->trip_file.datebegin.day != current->trip_file.dateend.day)
+        if(current->trip_file.timebegin.hour<_begin->hour || current->trip_file.timeend.hour>=_end->hour || current->trip_file.datebegin.day != current->trip_file.dateend.day)
         {
-            RemoveNode(&current,&prev,&_headtrip);
+            RemoveNode(&current, &prev, &_headtrip);
         }
 
         else
@@ -321,16 +342,12 @@ tripnode* RemoveUsingHour(ttime* _begin, ttime* _end, tripnode* _headtrip)
 
 }
 
-/**
-* RemoveUsingWeekday function: to remove from the list using the weekday criterion
-* \param _headtrip --> the head node of the list (the list itself passed by reference)
-* \param _weekday --> the value that represents the selected week day
-* It returns the updated head node
-*/
+
 tripnode* RemoveUsingWeekday(int _weekday, tripnode* _headtrip)
 {
     tripnode* current=NULL; //auxiliar node to iterate over the list
     tripnode* prev=NULL; //auxiliar node to iterate over the list (one pinter behind the current one)
+
     int converteddate=0;//variable to store the converted date
 
 
@@ -351,7 +368,7 @@ tripnode* RemoveUsingWeekday(int _weekday, tripnode* _headtrip)
 
         if(converteddate!=_weekday)
         {
-            RemoveNode(&current,&prev,&_headtrip);
+            RemoveNode(&current, &prev, &_headtrip);
         }
 
         else
@@ -360,6 +377,7 @@ tripnode* RemoveUsingWeekday(int _weekday, tripnode* _headtrip)
             current=current->next; //We use the pointer to the next
         }
 
+
     }
 
     return _headtrip;
@@ -367,7 +385,7 @@ tripnode* RemoveUsingWeekday(int _weekday, tripnode* _headtrip)
 }
 
 /**
-* ConvertDate function function: to convert a date into a day of the wee using the Key Value Method
+* ConvertDate function function: to convert a date into a day of the week using the Key Value Method
 * \param _day
 * \param _month
 * \param _year
@@ -377,88 +395,113 @@ int ConvertDate(int _day, int _month, int _year)
 {
     int convert=0; //variable to save the conversion
     int monthscale=0; //auxiliar variable to convert the month
-    int centuryscale=0; //to flag a leap year
+    int yeardigits=0;//variable to save the last two digits of the year
+    int leapyearflag=0; //to flag a leap year
     //We start by taking the last two digits of the year
     convert=_year%100;
     //We divide by 4
     convert/=4;
-    //We add another last two digits of the year
-    convert+=_year%100;
-    //We then calculate its modulus 7
-    convert=convert%7;
+    //We sum it to the day
+    convert+=_day;
 
     //We use the table of conversion of the months
     switch(_month)
     {
-    case 1:
-    case 10:
-        monthscale=0;
-        break;
-    case 2:
-    case 3:
-    case 11:
-        monthscale=3;
-        break;
-    case 4:
-    case 7:
-        monthscale=6;
-        break;
-    case 5:
-        monthscale=1;
-        break;
-    case 6:
-        monthscale=4;
-        break;
-    case 8:
-        monthscale=2;
-        break;
-    case 9:
-    case 12:
-        monthscale=5;
-        break;
+        case 1:
+        case 10:
+                monthscale=1;
+                break;
+        case 2:
+        case 3:
+        case 11:
+                monthscale=4;
+                break;
+        case 4:
+        case 7:
+                monthscale=0;
+                break;
+        case 5:
+                monthscale=2;
+                break;
+        case 6:
+                monthscale=5;
+                break;
+        case 8:
+                monthscale=3;
+                break;
+        case 9:
+        case 12:
+                monthscale=6;
     }
 
 
     //We sum the monthscale
     convert+=monthscale;
-    //We re-do the modulus 7
-    convert=convert%7;
-    //We sum it to the day
-    convert+=_day;
-    //We re-do the modulus 7
-    convert=convert%7;
-    //We use the table of conversion of the XX00s
-    switch(_year/100)
+    //We verify if we have a leap year
+    leapyearflag=LeapYear(_year);
+
+    //If we have and the month is january or february we decrement convert
+    if(leapyearflag==1 &&(_month==1 || _month==2))
     {
-    case 17:
-        centuryscale=4;
-        break;
-    case 18:
-        centuryscale=2;
-        break;
-    case 19:
-        centuryscale=0;
-        break;
-    case 20:
-        centuryscale=6;
-        break;
+        convert--;
     }
 
-    //We sum the century adjuster
-    convert+=centuryscale;
+    //We sum 6
+    convert+=6;
 
-    //We re-do the modulus 7 to convert to our scale (6=Saturday, 7=Sunday)
-    convert=convert%7;
+    //We take the last two digits of the year
+    yeardigits=_year%100;
+    //We add it
+    convert+=yeardigits;
+
+    //We take the rest of the division by 7
+    convert%=7;
+
+    //If the result is zero or 1(Saturday or Sunday) we add 6 to convert to our scale (6=Saturday, 7=Sunday)
+    if(convert==0 || convert==1)
+        convert+=6;
+    //If the result is other we decrement to have the same effect
+    else
+        convert--;
+
     //We returned the converted value
     return convert;
 }
 
 /**
-* RemoveUsingMaxDuration function: to remove from the list using the MaxDuration criterion
-* \param _headtrip --> the head node of the list (the list itself passed by reference)
-* \param _maxduration --> inserted value for the maximum trip duration in seconds
-* It returns the updated headnode
+* Leapyear function function: to test if a year is leap
+* \param _year
+* It returns a flag to tell if the the year is leap(1) or not(0)
 */
+
+int LeapYear(int _year)
+{
+    int flag=0;
+    //If the year can be divided by 400 the year is leap
+    if(_year%400==0)
+        flag=1;
+    else
+    {
+        //if it can be divided by 100 (but not by 400) it is not a leap year
+        if(_year%100==0)
+            flag=0;
+        else
+        {
+            //if it can't be divided neither by 400 nor 100, but it is by 4 it's a leap year
+            if(_year%4==0)
+                flag=1;
+            //If every condition fails it is not a leap year
+            else
+                flag=0;
+        }
+    }
+
+    return flag;
+
+}
+
+
+
 tripnode* RemoveUsingMaxduration(int _maxduration, tripnode* _headtrip)
 {
     tripnode* current=NULL; //auxiliar node to iterate over the list
@@ -471,6 +514,7 @@ tripnode* RemoveUsingMaxduration(int _maxduration, tripnode* _headtrip)
         return _headtrip;
     }
 
+
     current=_headtrip;
     prev=current;
 
@@ -480,14 +524,20 @@ tripnode* RemoveUsingMaxduration(int _maxduration, tripnode* _headtrip)
         {
             RemoveNode(&current,&prev,&_headtrip);
         }
+
         else
         {
             prev=current; //We save the current node
             current=current->next; //We use the pointer to the next
         }
+
     }
+
     return _headtrip;
+
 }
+
+
 
 /**
 * RemoveNode function: to remove nodes from the list
@@ -525,3 +575,4 @@ void RemoveNode(tripnode** _current, tripnode** _prev, tripnode** _headtrip)
         free(_temp);
     }
 }
+

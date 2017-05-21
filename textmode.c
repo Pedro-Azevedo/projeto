@@ -7,6 +7,7 @@
 #include "argtest.h"
 #include "listings.h"
 
+
 /**
  * Text mode function
  * It shows us the menu with options for Data Selection or various Listings
@@ -48,7 +49,7 @@ void textmode(char** argv, tripnode** _triplist, stationnode** _stationlist)
                 triplisting(_triplist);
                 break;
             case 3:
-                stationlisting();
+                stationlisting(_triplist, _stationlist);
                 break;
             case 4:
                 routelisting(_triplist);
@@ -60,4 +61,5 @@ void textmode(char** argv, tripnode** _triplist, stationnode** _stationlist)
                 return;//breaks the infinite cycle
         }
     }
+
 }

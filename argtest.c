@@ -38,5 +38,6 @@ void arguments_test(int argc, char **argv)
             exit(EXIT_FAILURE);
         }
     }
+
     return;
 }

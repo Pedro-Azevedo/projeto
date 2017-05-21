@@ -1,5 +1,6 @@
 #ifndef LISTINGS_H_INCLUDED
 #define LISTINGS_H_INCLUDED
+
 #include "trips.h"
 
 void routelisting(tripnode**);
@@ -8,6 +9,6 @@ int order_bynumber(tripnode**,tripnode*,int[]);
 void print_routelist(tripnode**,tripnode*,int, int, int[], int[]);
 void statisticslisting(void);
 void triplisting(tripnode**);
-void stationlisting(void);
+void stationlisting(tripnode**, stationnode**);
 
 #endif // LISTINGS_H_INCLUDED
