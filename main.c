@@ -34,13 +34,6 @@ int main(int argc, char*argv[])
 
     load_fromfiles(argv, &triplist, &stationlist);
 
-    teste=stationlist;
-    while(teste!=NULL)
-    {
-        printf("%s\n", teste->station_file.station);
-        teste=teste->next;
-    }
-
     //Start the text mode
     if(strcmp(argv[1], "-t")==0)
         textmode(argv, &triplist, &stationlist);

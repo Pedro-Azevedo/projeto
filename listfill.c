@@ -150,10 +150,10 @@ void load_stationfile(stationnode** _stationlist, FILE* _fp)
         token=strtok(NULL, separator);
         strcpy(stationtoread.terminal,token);
         token=strtok(NULL, separator);
-        stationtoread.station=(char*)realloc(stationtoread.station, (strlen(token)+1)*sizeof(char));
+        stationtoread.station=(char*)malloc((strlen(token)+1)*sizeof(char));
         strcpy(stationtoread.station, token);
         token=strtok(NULL, separator);
-        stationtoread.municipal=(char*)realloc(stationtoread.municipal, (strlen(token)+1)*sizeof(char));
+        stationtoread.municipal=(char*)malloc((strlen(token)+1)*sizeof(char));
         strcpy(stationtoread.municipal, token);
         token=strtok(NULL, separator);
         sscanf(token, "%lf", &stationtoread.lat);
