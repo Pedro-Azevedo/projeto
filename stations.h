@@ -1,7 +1,6 @@
 #ifndef STATIONS_H_INCLUDED
 #define STATIONS_H_INCLUDED
 
-
 #define HOURS 24
 
 typedef struct
@@ -12,6 +11,8 @@ typedef struct
     char *municipal;
     double lat;
     double lng;
+    int x;
+    int y;
     int status;
 } station_data;
 

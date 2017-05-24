@@ -6,6 +6,7 @@
 #include "trips.h"
 #include "argtest.h"
 #include "listings.h"
+#include "graphicmode.h"
 
 
 /**
@@ -183,18 +184,6 @@ void stationlisting(tripnode** _triplist, stationnode** _stationlist)
 
     printf("\n \n \n");
 
-/*
-    for(i=0; i<70; i++)
-    {
-        printf("STATION:%d\n", i);
-        for(j=0; j<HOURS; j++)
-        {
-            printf("%d\t", start[i][j]);
-        }
-
-        printf("\n");
-    }*/
-
 }
 
 void routelisting(tripnode** _triplist)
@@ -210,8 +199,8 @@ void routelisting(tripnode** _triplist)
     tripnode* stopbegin=NULL; //auxiliar pointer that will help us distinguish in the sorted list when the stationID chosen is correspondent to a start station or a stop station
     int i=0; //variable for cycles
 
-    do
-    {   //menu for route choosing and number of routes per page
+    do{
+        //menu for route choosing and number of routes per page
         printf("Choose:\n  -One of the stations ID's\n");
         printf("  -How many trips you want the program to show\n");
         fgets(buffer, BUFSIZE, stdin);
@@ -221,8 +210,8 @@ void routelisting(tripnode** _triplist)
             printf("Invalid choice\n");
             validchoice=0;
         }
-    }
-    while(validchoice!=2);
+    }while(validchoice!=2);
+
 
     //We start by organizing our trip list to make it easier to print data later
 
@@ -313,6 +302,8 @@ void routelisting(tripnode** _triplist)
 
     //We finally print the routes
     print_routelist(_triplist,stopbegin,ins,num,stationdepart,stationarrive);
+
+
 }
 
 void statisticslisting(void)

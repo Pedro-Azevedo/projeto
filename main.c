@@ -21,6 +21,7 @@ sobre viagens/estações de bicicleta de Boston
 //We include our header files
 #include "trips.h"
 #include "argtest.h"
+#include "graphicmode.h"
 
 int main(int argc, char*argv[])
 {
@@ -30,7 +31,6 @@ int main(int argc, char*argv[])
     //Define the pointers to our lists
     tripnode* triplist=NULL;
     stationnode* stationlist=NULL;
-    stationnode *teste;
 
     load_fromfiles(argv, &triplist, &stationlist);
 
@@ -40,7 +40,7 @@ int main(int argc, char*argv[])
 
     //Start the graphic mode
     if(strcmp(argv[1], "-g")==0)
-        graphicmode();
+        graphicmode(&triplist, &stationlist);
 
     //Free the lists memory
     ClearData(argv, &triplist, &stationlist, 1);
