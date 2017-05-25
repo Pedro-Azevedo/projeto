@@ -1,6 +1,5 @@
 #include "graphicmode.h"
 
-
 // definition of some strings: they cannot be changed when the program is executed !
 const char myName1[] = "Diogo Costa";
 const char myNumber1[] = "ist186971";
@@ -11,7 +10,7 @@ const char myNumber2[] = "ist425696";
  * graphic mode function: entry point of the program
  * only to invoke other functions !
  */
-void graphicmode(tripnode** _triplist, stationnode**_stationlist)
+void graphicmode(char** argv, tripnode** _triplist, stationnode**_stationlist)
 {
     SDL_Window *window = NULL;
     SDL_Renderer *renderer = NULL;
@@ -24,19 +23,26 @@ void graphicmode(tripnode** _triplist, stationnode**_stationlist)
     int height = TABLE_SIZE;
     int board_pos = 5;
     int x,y;
+    int weekday;
 
     // initialize graphics
     InitEverything(width, height, &serif, imgs, &window, &renderer);
+    //Render the initial window
+    RenderTable( board_pos, serif, imgs, renderer, _triplist, _stationlist);
 
+    //Initial messages
     SDL_ShowSimpleMessageBox(0,"Welcome!","Welcome to BikeStation program! You chose graphic mode", window);
     SDL_ShowSimpleMessageBox(0,"Start","Please start by choosing in the terminal a day of the week to show the routes", window);
 
-    criterion2(_triplist);
+    //Register the weekday
+    weekday=criterion2(_triplist);
 
-    SDL_ShowSimpleMessageBox(0,"Rules","Good! It will now appear a circle with all the stations. Click in a station to see the routes from and to those stations\n", window);
+    SDL_ShowSimpleMessageBox(0,"Rules","Good! It will now appear a circle with all the stations. Click in a station to see the routes from (green) and to (blue) those stations\n", window);
 
-    while( quit == 0 )
+    while( quit == 0)
     {
+        //On all the cycles except the first we need to re-eliminate the nodes, because we always reset the list after a click
+        *_triplist=RemoveUsingWeekday(weekday,*_triplist);
         // while there's events to handle
         while( SDL_PollEvent( &event ) )
         {
@@ -51,6 +57,7 @@ void graphicmode(tripnode** _triplist, stationnode**_stationlist)
                 {
                     case SDL_BUTTON_LEFT:
                     case SDL_BUTTON_RIGHT:
+                        RenderTable( board_pos, serif, imgs, renderer, _triplist, _stationlist);
                         SDL_GetMouseState(&x, &y);
                         DrawRoutes(x,y,_stationlist, _triplist, window, renderer);
                         break;
@@ -61,8 +68,8 @@ void graphicmode(tripnode** _triplist, stationnode**_stationlist)
                 }
             }
         }
-        // render game table
-        RenderTable( board_pos, serif, imgs, renderer, _triplist, _stationlist);
+        //Reset the lists
+        ClearData(argv, _triplist, _stationlist, 0);
         // render in the screen all changes above
         SDL_RenderPresent(renderer);
         // add a delay
@@ -97,6 +104,10 @@ void RenderTable( int _board_pos, TTF_Font *_font, SDL_Surface *_img[], SDL_Rend
     int coordx0, coordy0, radius, coordx, coordy, err;
     int numofstations=0;
     stationnode* current;
+    float increment=0.0f;
+    SDL_Rect rectangle;
+    int x,y;
+    double theta=0;
 
     // set color of renderer to some color
     SDL_SetRenderDrawColor( _renderer, 255, 255, 255, 255 );
@@ -118,14 +129,15 @@ void RenderTable( int _board_pos, TTF_Font *_font, SDL_Surface *_img[], SDL_Rend
     // render the IST Logo
     height = RenderLogo(TABLE_SIZE, 0, _img[1], _renderer);
 
-    // render the student name
+    // render the students names
     height += RenderText(TABLE_SIZE+3*MARGIN, height, myName1, _font, &black, _renderer);
 
-    // this renders the student number
+    // this renders the students numbers
     height += RenderText(TABLE_SIZE+3*MARGIN, height, myNumber1, _font, &black, _renderer);
     height=height+20;
     height += RenderText(TABLE_SIZE+3*MARGIN, height, myName2, _font, &black, _renderer);
     RenderText(TABLE_SIZE+3*MARGIN, height, myNumber2, _font, &black, _renderer);
+
 
     radius=300;
     coordx0=325;
@@ -134,27 +146,29 @@ void RenderTable( int _board_pos, TTF_Font *_font, SDL_Surface *_img[], SDL_Rend
     coordy=0;
     err=0;
 
+    //Draw the circle
     DrawCircle(_renderer, radius, coordx0, coordy0, coordx, coordy, err);
 
+    //Set the red color
     SDL_SetRenderDrawColor(_renderer, 255,0,0,0);
 
     current=*_stationlist;
 
+    //Count yhe number of stations
     while(current!=NULL)
     {
         numofstations++;
         current=current->next;
     }
 
-    float increment=0.0f;
 
+    //This increment variable will set the space between the rectangles showing the stations
     increment=(float)(2*M_PI)/numofstations;
-    SDL_Rect rectangle;
-    int x,y;
-    double theta=0;
 
     current=*_stationlist;
 
+    //For all the stations we start at initial points (with theta=0)
+    //THen we increment the theta using the increment value
     while(current!=NULL)
     {
         x=(int)coordx0+radius*cos(theta);
@@ -167,6 +181,7 @@ void RenderTable( int _board_pos, TTF_Font *_font, SDL_Surface *_img[], SDL_Rend
 
         SDL_RenderFillRect(_renderer,&rectangle);
 
+        //Save the coordinates for the station, for later access
         current->station_file.x=x;
         current->station_file.y=y;
 
@@ -179,18 +194,64 @@ void RenderTable( int _board_pos, TTF_Font *_font, SDL_Surface *_img[], SDL_Rend
 }
 
 
+/**
+ * DrawCircle: Draws the circle to display the stations
+ * \param _renderer renderer to handle all rendering in a window
+ * \param radius: the radius of the circle we're rendering
+ * \param coordx0: x coordinate of the center of the circle
+ * \param coordy0: y coordinate of the center of the circle
+ * \param coordx: auxiliary x coordinate to draw the circle
+ * \param coordy: auxiliary y coordinate to draw the circle
+ * \param err: parameter to control the rendering of the circle
+ */
+
 void DrawCircle (SDL_Renderer* _renderer, int radius, int coordx0, int coordy0, int coordx, int coordy, int err)
 {
+
     while(coordx>=coordy)
     {
-        SDL_RenderDrawPoint(_renderer, coordx0+coordx, coordy0+coordy);//1st octant
-        SDL_RenderDrawPoint(_renderer, coordx0+coordy, coordy0+coordx);//2nd octant
-        SDL_RenderDrawPoint(_renderer, coordx0-coordy, coordy0+coordx);//3rd octant
-        SDL_RenderDrawPoint(_renderer, coordx0-coordx, coordy0+coordy);//4th octant
-        SDL_RenderDrawPoint(_renderer, coordx0-coordx, coordy0-coordy);//5th octant
-        SDL_RenderDrawPoint(_renderer, coordx0-coordy, coordy0-coordx);//6th octant
-        SDL_RenderDrawPoint(_renderer, coordx0+coordy, coordy0-coordx);//7th octant
-        SDL_RenderDrawPoint(_renderer, coordx0+coordx, coordy0-coordy);//8th octant
+        //The algorithm chosen finds a path through the pixel grid pixels which are as close as possible to solutions of
+        //x² +y² =r²:
+        //At each step, the path is extended by choosing the adjacent pixel which satisfies the equation of the circle
+        // but also maximizes x² + y²
+
+        //The algorithm starts with the equation of the circle centered in x0, y0.
+        //FOr simplicity let's assume the circle is centered in (0,0) (not our case).
+
+        //We first consider only the first octant and draw a curve that starts in (r,0) and proceeds
+        // counterclockwise until the degree of 45
+
+        //The fast direction is the y direction so the algorithm always takes a step in the positive y direction
+        //and occasionally it goes in the slow direction (negative x direction)
+
+        //The equation of the circle is equivalent to x²+y²-r²=0
+        //We let the points in the circle to be a sequence of coordinates of the vector to the points
+        //The points are numbered according to the order in which are drawn (n=1 is the first point (r,0)
+
+        //For each point; xn² +yn²=r² -> xn² =r²-yn² which means xn+1² = r²-yn+1²
+        //Since the next point will always be at least 1 pixel higher than the last it's true that
+        // yn+1²=(yn+1)²=yn²+2yn+1
+        // xn+1²=r²-yn²-2yn-1
+        // xn+1²=xn²-2yn-1
+
+        //Because of the continuity of a circle and because the maxima along both axes is the same, we'll not be skipping x points
+        //as it advances in the sequence.
+        //Usually it stays on the same x coordinate, and sometimes advances by one.
+        //The resulting coordinate is then translated by adding midpoint coordinates.
+        //The zero in the transformed circle equation is replaced by the error term.
+        //The initialization of the error term is derived from an offset of 1/2 pixel at the start.
+
+        //Until the intersection with the perpendicular line, this leads to an accumulated value of r in the error term,
+        //so that this value is used for initialization
+
+        SDL_RenderDrawPoint(_renderer, coordx0+coordx, coordy0+coordy);
+        SDL_RenderDrawPoint(_renderer, coordx0+coordy, coordy0+coordx);
+        SDL_RenderDrawPoint(_renderer, coordx0-coordy, coordy0+coordx);
+        SDL_RenderDrawPoint(_renderer, coordx0-coordx, coordy0+coordy);
+        SDL_RenderDrawPoint(_renderer, coordx0-coordx, coordy0-coordy);
+        SDL_RenderDrawPoint(_renderer, coordx0-coordy, coordy0-coordx);
+        SDL_RenderDrawPoint(_renderer, coordx0+coordy, coordy0-coordx);
+        SDL_RenderDrawPoint(_renderer, coordx0+coordx, coordy0-coordy);
 
         coordy++;
 
@@ -383,30 +444,55 @@ SDL_Renderer* CreateRenderer(int width, int height, SDL_Window *_window)
     return renderer;
 }
 
+/**
+ * DrawRoutes: It identifies the station clicked and sends us to other function to draw the routes
+ * \param _x x coordinate clicked
+ * \param _y y coordinate clicked
+ * \param _stationlist (list of stations)
+ * \param _triplist (list of trips)
+ * \param window represents the window of the application
+ * \param _renderer renderer to handle all rendering in a window
+ */
 
 void DrawRoutes(int _x, int _y, stationnode** _stationlist, tripnode** _triplist, SDL_Window* window, SDL_Renderer* _renderer)
 {
-    stationnode* current=NULL;
+    stationnode* current=NULL;//auxiliary pointer to iterate over the station list
 
     current=*_stationlist;
 
     while(current!=NULL)
     {
+        //We look if the user clicked in any coordinates of a station
+        //Since the stations are represented by squares, we consider a small range (the size of the square)
+        //for the click
+        //When we find a station that matches we break the cycle
         if(_x>=current->station_file.x && _x<=current->station_file.x+10 && _y>=current->station_file.y &&  _y<=current->station_file.y+10)
             break;
 
         current=current->next;
     }
 
+    //If there wasn't a station found, we display a message on the screen and return immediately
     if(current==NULL)
     {
         SDL_ShowSimpleMessageBox(0,"Failure","Sorry, you didn't click a station\n", window);
         return;
     }
 
+    //If it's not we print on the terminal the station chosen
+    printf("You chose the station: %d -> %s\n", current->station_file.stationID, current->station_file.station);
+
     graphicroutelisting(_triplist, _stationlist, current->station_file.stationID, _renderer);
 
 }
+
+/**
+ * graphicroutelisting: It eliminates the unnecessary nodes and sorts the list depending on the station chosen
+ * \param _stationlist (list of stations)
+ * \param _triplist (list of trips)
+ * \param _ID the ID of the station chosen
+ * \param _renderer renderer to handle all rendering in a window
+ */
 
 void graphicroutelisting(tripnode** _triplist, stationnode** _stationlist, int _ID, SDL_Renderer* _renderer)
 {
@@ -419,12 +505,15 @@ void graphicroutelisting(tripnode** _triplist, stationnode** _stationlist, int _
     tripnode* stopbegin=NULL; //auxiliar pointer that will help us distinguish in the sorted list when the stationID chosen is correspondent to a start station or a stop station
     int i=0; //variable for cycles
 
-    num=_ID;
+    num=_ID; //we attribute the ID chosen
 
     //We start by organizing our trip list to make it easier to print data later
 
     current=*_triplist;
     prev=current;
+
+    if(current==NULL)
+        return;
 
     while(current!=NULL)
     {
@@ -480,10 +569,11 @@ void graphicroutelisting(tripnode** _triplist, stationnode** _stationlist, int _
 
     }
 
-
     //What remains of our trip list will now be sorted to differentiate the trips that our station as start station or as stop station
     stopbegin=SortTripList(_triplist,num);
 
+    if(stopbegin==NULL)
+        return;
 
     //Now we will sort the list again, ordering it by number of trips to the stop station
     for(i=0; i<STATIONMAX; i++)
@@ -511,20 +601,40 @@ void graphicroutelisting(tripnode** _triplist, stationnode** _stationlist, int _
     graph_routelist(_triplist,_stationlist, stopbegin,num,stationdepart,stationarrive, _renderer);
 }
 
+/**
+ * graph_routelist function: draws the routes
+ * _triplist --> the head node of the trip list
+ * _stationlist -> the head node of the station list
+ * end --> the head node of the "sublist" of trips (part of the list that contains the stationID as destination)
+ * num --> station ID number
+ * stationdepart --> vector with the number of trips between station ID and the respective value pos (as destination)
+ * stationdepart --> vector with the number of trips between station ID and the respective value pos (as origin)
+ */
 
 void graph_routelist(tripnode** _triplist, stationnode** _stationlist, tripnode* end, int num, int stationdepart[STATIONMAX], int stationarrive[STATIONMAX], SDL_Renderer* _renderer)
 {
-    tripnode* current=NULL; //auxiliar pointer to iterate over the list
-    stationnode* search=NULL;
-    int xini=0, yini=0, xfin=0, yfin=0;
-    int stationbegID=0;
-    int stationendID=0;
+    tripnode* current=NULL; //auxiliar pointer to iterate over the trip list
+    stationnode* search=NULL; //auxiliar pointer to iterate over the station list
+    int xini=0, yini=0, xfin=0, yfin=0; //extreme points to draw a line
+    int stationbegID=0; //variable to store the start station
+    int stationendID=0;//variable to store the stop station
+    int i=0,j=0; //variables to use in cycles
+    int thickness=0; //variable to store the thickness of the line to draw
 
     current=*_triplist;
+
+    if(current==NULL)
+    {
+        printf("Empty list\n");
+        return;
+    }
+
     search=*_stationlist;
 
+    //We store the station start ID
     stationbegID=current->trip_file.stationstartID;
 
+    //We look for this station in the station list so that we can determinate the coordinates of the station
     while(search!=NULL)
     {
         if(search->station_file.stationID==stationbegID)
@@ -533,16 +643,25 @@ void graph_routelist(tripnode** _triplist, stationnode** _stationlist, tripnode*
         search=search->next;
     }
 
+
     if(search==NULL)
         return;
 
     xini=search->station_file.x;
     yini=search->station_file.y;
 
+    //We set green
+    SDL_SetRenderDrawColor(_renderer, 0,255,0,0);
+    //We print the routes
     while(current!=end)
     {
+        if(current==NULL)
+            return;
+
+        //Store the stop station ID
         stationendID=current->trip_file.stationstopID;
         search=*_stationlist;
+        //Look for the station to get the respective coordinates
         while(search!=NULL)
         {
             if(search->station_file.stationID==stationendID)
@@ -557,36 +676,24 @@ void graph_routelist(tripnode** _triplist, stationnode** _stationlist, tripnode*
         xfin=search->station_file.x;
         yfin=search->station_file.y;
 
-        SDL_RenderDrawLine(_renderer, xini, yini, xfin, yfin);
-
-        if(stationdepart[current->trip_file.stationstopID]>30)
-            SDL_RenderDrawLine(_renderer, xini, yini+1, xfin, yfin+1);
-
-        if(stationdepart[current->trip_file.stationstopID]>60)
-            SDL_RenderDrawLine(_renderer, xini, yini+2, xfin, yfin+2);
-
-        if(stationdepart[current->trip_file.stationstopID]>90)
-            SDL_RenderDrawLine(_renderer, xini, yini+3, xfin, yfin+3);
-
-        if(stationdepart[current->trip_file.stationstopID]>120)
-            SDL_RenderDrawLine(_renderer, xini, yini+4, xfin, yfin+4);
-
-        if(stationdepart[current->trip_file.stationstopID]>150)
-            SDL_RenderDrawLine(_renderer, xini, yini+5, xfin, yfin+5);
-
-        if(stationdepart[current->trip_file.stationstopID]>180)
-            SDL_RenderDrawLine(_renderer, xini, yini+6, xfin, yfin+6);
-
-        if(stationdepart[current->trip_file.stationstopID]>210)
-            SDL_RenderDrawLine(_renderer, xini, yini+7, xfin, yfin+7);
-
-        if(stationdepart[current->trip_file.stationstopID]>240)
-            SDL_RenderDrawLine(_renderer, xini, yini+8, xfin, yfin+8);
-
+        //If the number of trips is different from zero, we draw lines
+        if(stationdepart[current->trip_file.stationstopID]!=0)
+        {
+            //we apply the linear correlation defined
+            //thickness = 0.16*number of trips + 0.84
+            thickness=(int)(0.16*stationdepart[current->trip_file.stationstopID]+0.84);
+            for(i=-1; i<=thickness; i++)
+            {
+                for(j=1; j<=thickness; j++)
+                    SDL_RenderDrawLine(_renderer, xini+i, yini+j, xfin+i, yfin+j);
+            }
+        }
 
         current=current->next;//iterate over the list
     }
 
+    //We do the same but now considering the chosen station as end point
+    //The algorithm is analogous
     stationendID=current->trip_file.stationstopID;
 
     while(search!=NULL)
@@ -602,6 +709,9 @@ void graph_routelist(tripnode** _triplist, stationnode** _stationlist, tripnode*
 
     xfin=search->station_file.x;
     yfin=search->station_file.y;
+
+    //We set up blue
+    SDL_SetRenderDrawColor(_renderer, 0,0,255,0);
 
     while(current!=NULL)
     {
@@ -621,31 +731,16 @@ void graph_routelist(tripnode** _triplist, stationnode** _stationlist, tripnode*
         xini=search->station_file.x;
         yini=search->station_file.y;
 
-        SDL_RenderDrawLine(_renderer, xini, yini, xfin, yfin);
+        if(stationarrive[end->trip_file.stationstartID]!=0)
+        {
+            thickness=(int)(0.16*stationarrive[end->trip_file.stationstartID]+0.84);
+            for(i=-1; i<=thickness; i++)
+            {
+                for(j=1; j<=thickness; j++)
+                    SDL_RenderDrawLine(_renderer, xini+i, yini+j, xfin+i, yfin+j);
+            }
+        }
 
-        if(stationarrive[current->trip_file.stationstartID]>30)
-            SDL_RenderDrawLine(_renderer, xini, yini+1, xfin, yfin+1);
-
-        if(stationarrive[current->trip_file.stationstartID]>60)
-            SDL_RenderDrawLine(_renderer, xini, yini+2, xfin, yfin+2);
-
-        if(stationarrive[current->trip_file.stationstartID]>90)
-            SDL_RenderDrawLine(_renderer, xini, yini+3, xfin, yfin+3);
-
-        if(stationarrive[current->trip_file.stationstartID]>120)
-            SDL_RenderDrawLine(_renderer, xini, yini+4, xfin, yfin+4);
-
-        if(stationarrive[current->trip_file.stationstartID]>150)
-            SDL_RenderDrawLine(_renderer, xini, yini+5, xfin, yfin+5);
-
-        if(stationarrive[current->trip_file.stationstartID]>180)
-            SDL_RenderDrawLine(_renderer, xini, yini+6, xfin, yfin+6);
-
-        if(stationarrive[current->trip_file.stationstartID]>210)
-            SDL_RenderDrawLine(_renderer, xini, yini+7, xfin, yfin+7);
-
-        if(stationarrive[current->trip_file.stationstartID]>240)
-            SDL_RenderDrawLine(_renderer, xini, yini+8, xfin, yfin+8);
 
         current=current->next;//iterate over the list
     }

@@ -320,9 +320,16 @@ void statisticslisting(void)
 tripnode* SortTripList(tripnode** trip_head, int station_ID)
 {
     int notSaved=0; //auxiliar flag to indicate the first node of the stopstations
-    tripnode* current=*trip_head; //auxiliar pointer to iterate over the list
+    tripnode* current=NULL; //auxiliar pointer to iterate over the list
     tripnode* end=NULL; //node to save the begin of the second sublist
     tripnode* prev=NULL; //auxiliar pointer to iterate over the list (one node behind current)
+
+    current=*trip_head;
+
+    if(current==NULL)
+    {
+        return NULL;
+    }
 
     while(current!=NULL)
     {

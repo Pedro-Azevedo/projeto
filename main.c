@@ -40,7 +40,7 @@ int main(int argc, char*argv[])
 
     //Start the graphic mode
     if(strcmp(argv[1], "-g")==0)
-        graphicmode(&triplist, &stationlist);
+        graphicmode(argv, &triplist, &stationlist);
 
     //Free the lists memory
     ClearData(argv, &triplist, &stationlist, 1);
