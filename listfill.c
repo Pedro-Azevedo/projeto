@@ -151,9 +151,19 @@ void load_stationfile(stationnode** _stationlist, FILE* _fp)
         strcpy(stationtoread.terminal,token);
         token=strtok(NULL, separator);
         stationtoread.station=(char*)malloc((strlen(token)+1)*sizeof(char));
+        if(stationtoread.station==NULL)
+        {
+            printf("Error: Memory not correctly allocated\n");
+            exit(EXIT_FAILURE);
+        }
         strcpy(stationtoread.station, token);
         token=strtok(NULL, separator);
         stationtoread.municipal=(char*)malloc((strlen(token)+1)*sizeof(char));
+        if(stationtoread.municipal==NULL)
+        {
+            printf("Error: Memory not correctly allocated\n");
+            exit(EXIT_FAILURE);
+        }
         strcpy(stationtoread.municipal, token);
         token=strtok(NULL, separator);
         sscanf(token, "%lf", &stationtoread.lat);
