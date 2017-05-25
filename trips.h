@@ -71,4 +71,4 @@ void RemoveNode(tripnode**,tripnode**, tripnode**);
 int ConvertDate(int, int, int);
 int LeapYear(int);
 
-#endif // TRIPS_H_INCLUDED
+#endif

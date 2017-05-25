@@ -84,6 +84,7 @@ void triplisting(tripnode** _triplist)
 
         printf("\nPress a key to continue. Press 1 to leave\n");
         c=getchar();
+        system("clear");
         if(c=='1')
             break;
         i=num; //Reset i so that we can print more num trips
@@ -299,17 +300,13 @@ void routelisting(tripnode** _triplist)
         if(station==0)
             break;
     }
-
+     system("clear");
     //We finally print the routes
     print_routelist(_triplist,stopbegin,ins,num,stationdepart,stationarrive);
 
 
 }
 
-void statisticslisting(void)
-{
-
-}
 /**
 * SortTripList function: function that sorts the station list separating the ones that start in the station from the ones that end.
 * Note: from this point items that start on station_ID and items that end on station_ID will be mostly threated as two sublists
@@ -517,7 +514,475 @@ void print_routelist(tripnode** _triplist, tripnode* end, int ins, int num, int 
 
         if(c=='1')
             break;
-
+        system("clear");
         i=ins; //Reset i so that we can print more ins trips
     }
+}
+void statisticslisting(tripnode** _triplist)
+{
+    int userchoice=0; //the choice from the given menu
+    // We set an infinite cycle to show us the menu so that everytime the user returns from
+    // the various options functions, it will still display the menu for him to choose
+    while(1)
+    {
+        printf("Consider the following options\n\n");
+        printf("\t1. Type & Gender\n");
+        printf("\t2. Age (Registered Only!)\n");
+        printf("\t3. Trip duration\n");
+        printf("\t4. Average Speed\n");
+        printf("\t5. LEAVE MENU\n\n");
+        userchoice=testchoice(5);
+
+        switch(userchoice)
+        {
+        case 1:
+            system("clear");
+            GenderStats(_triplist);
+            break;
+        case 2:
+            system("clear");
+            AgeStats(_triplist);
+            break;
+        case 3:
+            system("clear");
+            DurationStats(_triplist);
+            break;
+        case 4:
+            system("clear");
+            AvgSpeedStats(_triplist);
+            break;
+        case 5:
+            system("clear");
+            return; //breaks the infinite cycle
+        }
+    }
+    return;
+}
+
+/**
+* GenderStats function: function that calculates the number of registered/casual members and in case of the first their sex
+* \param _triplist --> the head node of the list (the list itself passed by reference)
+*/
+void GenderStats (tripnode** _triplist)
+{
+    tripnode* cur=*_triplist;
+    double casual=0, regfem=0, regmale=0, total=0; //values counted during the list itineration
+    double percent_v[3];
+
+    while(cur!=NULL)
+    {
+        //type=0 --> casual     type=1 --> Registered (only registered present gender)
+        if(cur->trip_file.user.type==0)
+            casual++;
+        else if(cur->trip_file.user.gender==1) //for the registered if gender=1 --> male
+            regmale++;
+        else //for the registered if gender=0 -->female
+            regfem++;
+        //itinerate over the list
+        cur=cur->next;
+    }
+    total=(regfem+regmale+casual); //total of entries
+    percent_v[0]= (regfem/total)*100;
+    percent_v[1]= (regmale/total)*100;
+    percent_v[2]= (casual/total)*100;
+    print_gstats(percent_v);
+    write_gstats(percent_v,total);
+}
+
+/**
+* print_gstats function: function prints the results of GenderStats on the screen with some illustrative bars
+* \param percent_v --> vector with the  needed values from GenderStats
+*/
+void print_gstats (double percent_v[2])
+{   //vector to print the correct number of bars
+    int bar_count[3]= {0};
+    //top of the page
+    printf("======================================================================\n");
+    printf("\t\t\tTYPE & GENDER STATS\n");
+    printf("======================================================================\n");
+    //cycle to print each gender and type and respective data
+    for(int i=0; i<=2; i++)
+    {   //text selection
+        if(i==0)
+            printf("Registered Females\t");
+        else if(i==1)
+            printf("Registered Males\t");
+        else
+            printf("Casual\t\t\t");
+        //because each bar represents 3% we divide de %/3  and decrease each time a bar is printed
+        for(bar_count[i]=percent_v[i]/3; bar_count[i]>0; bar_count[i]--)
+        {
+            printf("|");
+        }
+        printf("  %.2f %%\n",percent_v[i]); //print the value with 2 decimal cases
+        printf("----------------------------------------------------------------------\n");
+    }
+    //bottom of the page
+    printf("\t\t\t\t\t\tPress ENTER to leave\n");
+    printf("======================================================================\n");
+    getchar(); //wait for enter to be pressed
+    system("clear"); //screen clear
+    return;
+}
+
+/**
+* write_gstats function: function that writes the results of GenderStats on a .txt file
+* \param percent_v --> vector with the  needed percentage values from GenderStats
+* \param total --> number of trips being analyzed
+*/
+void write_gstats(double percent_v[2], double total)
+{
+    //creates a pointer to overwrite (w) on the .txt file
+    FILE* fptr=fopen("type_gender_stats.txt","w");
+    //text to be written and correspondent file close
+    fprintf(fptr,"\t\t--Type & Gender Stats--\n\n");
+    fprintf(fptr,"1. Casual: %.0f out of %.0f (%.2f%%)\n",((percent_v[2]/100)*total),total, percent_v[2]);
+    fprintf(fptr,"2. Registered: %.0f out of %.0f (%.2f%%)\n",(((percent_v[0]+percent_v[1])/100)*total),total,(percent_v[0]+percent_v[1]));
+    fprintf(fptr,"\t.1 Female: %.0f out of %.0f (%.2f%%)\n",((percent_v[0]/100)*total),total,percent_v[0]);
+    fprintf(fptr,"\t.2 Male: %.0f out of %.0f (%.2f%%)\n",((percent_v[1]/100)*total),total,percent_v[1]);
+    fclose(fptr);
+}
+
+/**
+* AgeStats function: function that counts all members age in a range of 2 years
+* \param _triplist --> the head node of the list (the list itself passed by reference)
+*/
+void AgeStats(tripnode** _triplist)
+{
+    tripnode* cur=*_triplist; //pointer to the beginning of the list
+    int temp_birthyear, pos=0, agerangesize=0, total=0;
+    double age[80]= {0}, percent_vect[80]= {0}; //vector to save the number of users that belong to each age
+    //cycle to itinerate over the list
+    while(cur!=NULL)
+    {
+        //if there was no birth year, it was set to -1 when it was read
+        if(cur->trip_file.user.birthyear!=-1)
+        {
+            //if it exists its age is equal to the current year-birthyear
+            temp_birthyear=2017-cur->trip_file.user.birthyear;
+            //we divide by 2 because it is organized in 2 years range
+            pos=temp_birthyear/2;
+            if(pos>agerangesize)
+            {
+                //agerange saves the highest 2 year range with members
+                agerangesize=pos;
+            }
+            age[pos]+=1;//every time a birth year is read its correspondent value is incremented
+            total++;
+        }
+        cur=cur->next;
+    }
+    for(int i=0; i<agerangesize; i++)
+    {
+        percent_vect[i]=(age[i]/total)*100;
+    }
+    age[agerangesize]=percent_vect[agerangesize]=-1;
+    print_astats(percent_vect);
+    write_astats(percent_vect,total);
+}
+
+/**
+* print_astats function: function that prints the age stats along with the illustrative bar graphic
+* \param percent_v --> vector with the  needed percentage values from AgeStats
+*/
+void print_astats (double percent_v[80])
+{
+    int bar_count[80]= {0}; //vector to allow the bar printing
+    int age=0, no_data=0;   //flag for empty lists and age
+    //top of the page
+    printf("======================================================================\n");
+    printf("\t\t\t\tAGE STATS\n");
+    printf("======================================================================\n");
+    // loop for data printing (all age ranges)
+    for(int i=0; i<=80; i++)
+    {   //in case the value is invalid - NaN - (condition 2) because of some exaggerated numbers or too low (condition 1)
+        if(percent_v[i]>=0.01 && percent_v[i]== percent_v[i])
+        {   //prints age range
+            printf("%d-%d     \t",age,(age+2));
+            //because each bar represents 1%
+            for(bar_count[i]=percent_v[i]; bar_count[i]>0; bar_count[i]--)
+            {
+                printf("|");
+                no_data=1; // if a bar is printed it means that atleast 1% of the values exist
+            }
+            printf("  %.2f %%\n",percent_v[i]);
+            printf("----------------------------------------------------------------------\n");
+        }
+        age=age+2; //"increment" age range
+    }
+    //if no data is available to be printed
+    if(no_data==0)
+        printf("\t\tNO DATA FITS YOUR SEARCH!!!\n");
+    //bottom of the page
+    printf("\t\t\t\t\t\tPress ENTER to leave\n");
+    printf("======================================================================\n");
+    getchar(); //wait for ENTER to be pressed and screen cleanse
+    system("clear");
+    return;
+}
+
+/**
+* write_astats function: function that writes the results of AgeStats on a .txt file
+* \param percent_v --> vector with the  needed percentage values from AgeStats
+* \param total --> number of trips being analyzed
+*/
+void write_astats (double percent_v[80], double total)
+{
+    int age=0;
+    //file .txt is opened and overwritten or created
+    FILE* fptr=fopen("age_stats.txt","w");
+    //top of the page
+    fprintf(fptr,"\t\t--Age Stats--\n\n");
+    for(int i=0; i<=80; i++)
+    {   //conditions 1 and 2 from print_astats
+        if(percent_v[i]>=0.01 && percent_v[i]== percent_v[i])
+        {   //age range is followed by % and actual numbers
+            fprintf(fptr,"%d yrs->%d yrs:\t",age,(age+2));
+            fprintf(fptr,"%.2f %%   (%.0f out of %.0f)\n",percent_v[i],(percent_v[i]/100)*total, total);
+
+        }
+        age=age+2; //age is "incremented"
+    }
+    fclose(fptr); //file is closed
+}
+
+/**
+* DurationStats function: function that counts all members trip duration
+* \param _triplist --> the head node of the list (the list itself passed by reference)
+*/
+void DurationStats(tripnode** _triplist)
+{
+    int temp_timespan, pos;
+    double duration[24], durationcount; //vector to save each 15 min interval up to 6 hours
+    tripnode* cur=*_triplist;
+    //cycle to itinerate over the list
+    while(cur!=NULL)
+    {
+        //convertion of the timespan from seconds to minutes
+        temp_timespan=(cur->trip_file.timespan/60);
+        //due to the fat that each 15 minute interval corresponds to a position we divide the time by 15
+        pos=temp_timespan/15;
+        //if the timespan goes beyond the maximum it is ignored (if it does not its respective pos and the overall count are increased)
+        if(pos<24)
+        {
+            duration[pos]+=1;
+            durationcount++;
+        }
+        cur=cur->next;
+    }
+    //loop that calculates every number of duration as a percentage of the overall trips
+    for(int i=0; i<24; i++)
+    {
+        duration[i]=((duration[i])/durationcount)*100;
+    }
+    print_dstats(duration);
+    write_dstats(duration,durationcount);
+}
+
+/**
+* print_dstats function: function that prints the results of DurationStats on the screen
+* \param percent_v --> vector with the  needed percentage values from DurationStats
+*/
+void print_dstats(double percent_v[23])
+{   //vector used to print illustrative bars
+    int bar_count[23]= {0};
+    int durationmin=0,durationhrs=0; //vars to where the minutes and hrs of the duration are stored/converted
+    //top of the screen
+    printf("======================================================================\n");
+    printf("\t\t\t\tDURATION STATS\n");
+    printf("======================================================================\n");
+    //loop that prints all 23 time intervals
+    for(int i=0; i<=23; i++)
+    {   //however, they are only printed if their value is significant enough to the counting
+        if(percent_v[i]>=0.01)
+        {   //the min var goes beyond 60 it means that it can be converted to entire hours
+            if(durationmin>=60)
+            {   //hour var is increased and the correspondent in min is subtracted
+                durationhrs++;
+                durationmin-=60;
+            } //prints the hours and mins of duration range
+            printf("%dh %dmin - %dh %dmin\t",durationhrs,durationmin,durationhrs,durationmin+14);
+            //because each bar represents 3%
+            for(bar_count[i]=percent_v[i]/3; bar_count[i]>0; bar_count[i]--)
+            {
+                printf("|");
+            }
+            printf("  %.2f %%  \n",percent_v[i]);
+            printf("----------------------------------------------------------------------\n");
+        }
+        durationmin=durationmin+15;
+    }
+    //bottom of the page
+    printf("\t\t\t\t\t\tPress ENTER to leave\n");
+    printf("======================================================================\n");
+    getchar(); //wait for a key to be pressed and clears the screen
+    system("clear");
+    return;
+}
+
+/**
+* write_dstats function: function that writes the results of DurationStats on .txt file
+* \param percent_v --> vector with the  needed percentage values from DurationStats
+* \param durationcount --> number of trips counted
+*/
+void write_dstats (double percent_v[23], double durationcount)
+{
+    int durationmin=0, durationhrs=0;
+    //.txt file is created/opened and overwritten
+    FILE* fptr=fopen("duration_stats.txt","w");
+    //top of the page
+    fprintf(fptr,"\t\t--Duration Stats--\n\n");
+    //loop for all 23 time ranges (similar to the one in print_dstats
+    for(int i=0; i<=23; i++)
+    {
+        if(percent_v[i]>=0.01)
+        {
+            if(durationmin>=60)
+            {
+                durationhrs++;
+                durationmin-=60;
+            }
+            fprintf(fptr,"%dh %dmin - %dh %dmin:\t",durationhrs,durationmin,durationhrs,durationmin+14);
+            fprintf(fptr,"%.2f %% (%.0f out of %.0f)\n",percent_v[i], (percent_v[i]/100)*durationcount, durationcount);
+        }
+        durationmin=durationmin+15;
+    }
+    //file is closed
+    fclose(fptr);
+}
+
+/**
+* AverageSpeedStats function: function that calculates the average of the average speeds and separates them by type, gender and age
+* \param _triplist --> head node of the list (the list itself passed by reference)
+*/
+void AvgSpeedStats (tripnode** _triplist)
+{
+    tripnode* cur=*_triplist;
+    double registered[1][80]= {{0}}, casual=0; //doubles used to count the sum of all average speeds depending on [a][b],c: a.gender b.age c.type
+    double avgspeed_val, distance, time,temp; //temp avrg speed, distance, time and temp vars used to calculate each trip avg. speed
+    double registeredcount[2][100]= {{0}}, casualcount=0; //registered count has a bigger size to prevent segmentation fault and both are used to count the number of items added to the previous vars
+    int line,column;
+    //loop to itinerate over the list to find lat and long values
+    while(cur!=NULL)
+    {   //distance is calculated through the haversine formula
+        distance=GetDistance(cur->trip_file.start->lat,cur->trip_file.start->lng,cur->trip_file.stop->lat,cur->trip_file.stop->lng);
+        //time is converted from m/s to km/h
+        time=(cur->trip_file.timespan/3.6);
+        //Avg.Speed=deltax/deltat
+        avgspeed_val=distance/time;
+        //in the case where the avgspeed value is valid and not 0 (i.e. nor time nor distance are 0)
+        if(avgspeed_val!=0 && avgspeed_val==avgspeed_val )
+        {   //if the user is Casual type casual variable is increased and so is its' count
+            if(cur->trip_file.user.type==0)
+            {
+                casual+=avgspeed_val;
+                casualcount+=1;
+            }
+            else
+            {   //for registered users we use deltayears/2 to calculate every 2 year range and use it as 2nd var of the array
+                line=(2017-cur->trip_file.user.birthyear)/2;
+                column=cur->trip_file.user.gender; //we then use its gender to define the 1st var of the array
+                temp=registered[column][line];      //avg speed and its count are updated
+                registered[column][line]=avgspeed_val+temp;
+                registeredcount[column][line]+=1;
+            }
+        }
+        cur=cur->next;
+    }
+    casual=casual/casualcount; //calculates the average of avg. speeds in casual type
+
+    for(int i=0; i<=1; i++)
+        for(int j=0; j<80; j++)
+            registered[i][j]=registered[i][j]/registeredcount[i][j]; //for every array entry the percentage is calculated
+
+    print_avgsstats(registered,casual);
+    write_avgsstats(registered,casual);
+    return;
+}
+
+/**
+* print_avgsstats function: function that prints the results of AvgSpeedStats on the screen
+* \param avgspeed_v --> vector with the some of the needed avg speed values from AvgSpeedStats
+* \param casual --> double with the casual avg speed
+*/
+void print_avgsstats (double avgspeed_v[][80], double casual)
+{
+    int age=0;
+    //top of the screen
+    printf("======================================================================\n");
+    printf("\t\t\tAVERAGE SPEED STATS(km/h)\n");
+    printf("======================================================================\n\n");
+    //top of the table
+    printf("\t\t|\t   Registered\t\t|\t\t|\n\t\t|    Female\t|\tMale\t|    Casual\t|\n");
+    printf("----------------------------------------------------------------------\n");
+    //used to itinerate over the array
+    for(int j=0; j<=80; j++)
+    {   //if one of the values is significant and both are valid
+        if((avgspeed_v[0][j]>0 || avgspeed_v[1][j]) && (avgspeed_v[0][j]==avgspeed_v[0][j] && avgspeed_v[1][j]==avgspeed_v[1][j]))
+        {   //values are printed
+            printf("\t%d-%d\t|",age,(age+2));
+            //because each bar represents 3%
+            printf("    %.2f\t|   %.2f\t|    %.2f\t|\n",avgspeed_v[0][j],avgspeed_v[1][j],casual);
+            printf("----------------------------------------------------------------------\n");
+        }
+        age=age+2;
+    }
+    //bottom of the screen
+    printf("\t\t\t\t\t\tPress ENTER to leave\n");
+    printf("======================================================================\n");
+    getchar(); //waits for enter to be pressed and clears the screen
+    system("clear");
+    return;
+}
+
+/**
+* write_avgsstats function: function that writes the results of AvgSpeedStats to a .txt file
+* \param percent_v --> vector with some of the needed avg speed values from AvgSpeedStats
+* \param casual --> double with the avg speed for casual users
+*/
+void write_avgsstats (double avgspeed_v[][80], double casual)
+{
+    int age=0;
+    //file is created/overwritten
+    FILE* fptr=fopen("avg_speed_stats.txt","w");
+    //top of the page
+    fprintf(fptr,"\t\t--Average Speed Stats--\n\n");
+    //head of the table
+    fprintf(fptr,"\t\t|\t   Registered  \t\t|\t\t\t|\n\t\t|  Female\t|\tMale\t|    Casual\t|\n");
+    fprintf(fptr,"-------------------------------------------------------------------\n");
+    //similar loop to the one used in print_avgsstats
+    for(int j=0; j<=80; j++)
+    {
+        if((avgspeed_v[0][j]>0 || avgspeed_v[1][j]) && (avgspeed_v[0][j]==avgspeed_v[0][j] && avgspeed_v[1][j]==avgspeed_v[1][j]))
+        {
+            fprintf(fptr,"%d-%d   \t\t|",age,(age+2));
+
+            fprintf(fptr,"    %.2f \t\t|   %.2f \t|    %.2f \t\t|\n",avgspeed_v[0][j],avgspeed_v[1][j],casual);
+            fprintf(fptr,"-------------------------------------------------------------------\n");
+        }
+        age=age+2;
+    }
+    //file is closed
+    fclose(fptr);
+}
+
+/**
+* GetDistance function: function that calculates a distance between 1(lat,long) and 2(lat,long)
+* \param lat1_deg, lat2_deg --> latitudes from both points in degrees
+* \param long1_deg, long2_deg --> longitudes from both points in degrees
+*/
+double GetDistance (double lat1_deg, double long1_deg, double lat2_deg, double long2_deg)
+{
+    //variables utilized on the conversion and formulas
+    double lat1_rad, long1_rad, lat2_rad, long2_rad, step1, step2, dist;
+    //convert from degrees to radians
+    lat1_rad=(lat1_deg*PI)/180;
+    long1_rad=(long1_deg*PI)/180;
+    lat2_rad=(lat2_deg*PI)/180;
+    long2_rad=(long2_deg*PI)/180;
+    //we use the haversine formula to calculate de distance of two points by its longitude and latitude
+    step1=pow(sin((lat2_rad-lat1_rad)/2),2)+(cos(lat1_rad)*cos(lat2_rad)*pow(sin((long2_rad-long1_rad)/2),2));
+    step2=2*atan2(sqrt(step1),sqrt(1-step1));
+    dist=EARTH_RADIUS_M*step2;
+    return dist;
 }

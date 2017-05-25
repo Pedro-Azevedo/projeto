@@ -33,7 +33,11 @@ void dataselection(int* _all, ttime* _begin, ttime* _end, int* _weekday, int* _m
 
     //If the user chooses the second option, it will be sent to another menu to define the criteria wanted
     if((*_all)==2)
+    {
+        system("clear");
         criterion(_begin, _end, _weekday, _maxduration, _triplist, _stationlist, argv);
+    }
+
 
     //If it chooses option 1 or option 3 and when it returns from function "criterion" it will return to the main menu
 }
@@ -70,18 +74,27 @@ void criterion (ttime* _begin, ttime* _end, int* _weekday, int* _maxduration, tr
         switch(userchoice)
         {
         case 1:
+            system("clear");
             criterion1(_begin, _end, _triplist);
+            system("clear");
             break;
         case 2:
+            system("clear");
             (*_weekday)=criterion2(_triplist);
+            system("clear");
             break;
         case 3:
+            system("clear");
             (*_maxduration)=criterion3(_triplist);
+            system("clear");
             break;
         case 4:
+            system("clear");
             ClearData(argv, _triplist, _stationlist, 0);
+            system("clear");
             break;
         case 5:
+            system("clear");
             return; //breks the infinite cycle
         }
     }
@@ -253,4 +266,3 @@ void ClearData(char** argv, tripnode** _triplist, stationnode** _stationlist, in
         load_fromfiles(argv, _triplist, _stationlist);
 
 }
-

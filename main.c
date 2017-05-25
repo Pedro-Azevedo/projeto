@@ -1,15 +1,10 @@
 /*************************************************************
-
 Projeto Final de Programação 2º Semestre 2016/2017
-
 AUTORES:    Diogo Costa, nº 86971
             Pedro Azevedo, nº 84396
-
 DATA: 25/05/2017
-
 Implementação do programa Bikestation, de tratamento de dados
 sobre viagens/estações de bicicleta de Boston
-
 ***************************************************************/
 
 
@@ -47,5 +42,3 @@ int main(int argc, char*argv[])
 
     return EXIT_SUCCESS;
 }
-
-
